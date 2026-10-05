@@ -26,6 +26,20 @@ Abrir `http://localhost:8788/club` y `/hub`. El código de acceso de Hub es el `
 
 ## Cloudflare Pages + D1
 
+### Despliegue desde GitHub Actions
+
+En el repositorio, abrir **Settings → Secrets and variables → Actions** y añadir tres secretos:
+
+- `CLOUDFLARE_API_TOKEN`: token limitado a la cuenta de destino, con permisos **Account → Cloudflare Pages → Edit** y **Account → D1 → Edit**.
+- `CLOUDFLARE_ACCOUNT_ID`: identificador de esa cuenta de Cloudflare.
+- `HUB_TOKEN`: código privado del equipo, de al menos 12 caracteres. No reutilizar la clave de pruebas.
+
+Ejecutar **Actions → Deploy Cream to Cloudflare → Run workflow** desde `main`. El workflow instala las dependencias fijadas, verifica pruebas y build, compila Functions y ejecuta `scripts/deploy-cloudflare.mjs` para preparar Pages/D1, aplicar migraciones, configurar el acceso del equipo y publicar. El resultado del despliegue muestra la URL pública. Se ejecuta únicamente de forma manual y desde `main`; los pushes siguen ejecutando las verificaciones de CI.
+
+Esta configuración prepara el despliegue. La publicación real requiere los tres secretos y un workflow terminado correctamente.
+
+### Configuración manual en Cloudflare
+
 1. Crear una base D1 llamada `cream-los-cabos` y sustituir el identificador reservado de `wrangler.toml` por su UUID real.
 2. Vincular el repositorio con un proyecto **Cloudflare Pages**: comando `npm run build`, directorio de salida `dist`, Node.js 24. `functions/` se despliega como Pages Functions; `_routes.json` limita su ejecución a `/api/*`. El resto conserva las rutas SPA de Club y Hub.
 3. Configurar el binding D1 **DB** y el secreto **HUB_TOKEN** para producción. Para previews, utilizar una base y una clave separadas.

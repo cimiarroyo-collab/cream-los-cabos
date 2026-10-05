@@ -1,0 +1,33 @@
+name: Deploy Cream to Cloudflare
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - name: Compile Cloudflare Pages Functions
+        run: npx wrangler pages functions build --outdir /tmp/cream-functions
+      - name: Deploy Pages and D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          HUB_TOKEN: ${{ secrets.HUB_TOKEN }}
+        run: node --use-env-proxy scripts/deploy-cloudflare.mjs

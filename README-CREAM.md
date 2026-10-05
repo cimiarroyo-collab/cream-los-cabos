@@ -33,10 +33,13 @@ Se amplió el prototipo existente conservando React/Vite, las rutas `/club` y `/
 - `wrangler.toml`, `public/_routes.json`, `public/_headers`: configuración de Pages/D1 y headers.
 - `tests/`: validación de catálogo, SQLite/API y recorrido de navegador con D1 real local.
 - `.github/workflows/ci.yml`: build, pruebas y recorrido completo en cada push/PR.
+- `.github/workflows/deploy-cloudflare.yml` y `scripts/deploy-cloudflare.mjs`: despliegue manual de producción en Pages y D1, con migraciones y verificación del acceso a Hub.
 
 ## Configuración pendiente de producción
 
 Sustituir el UUID reservado de D1 por la base real, configurar `HUB_TOKEN` y aplicar migraciones. El repositorio no incluye secretos ni modifica recursos Cloudflare de producción.
+
+El workflow de despliegue prepara el identificador de D1 automáticamente en una configuración temporal. Para publicarlo desde GitHub, configurar los secretos indicados en README y ejecutar **Deploy Cream to Cloudflare** en `main`. La presencia del workflow no implica que exista un despliegue público.
 
 El alcance es pedidos para recoger y pago en sucursal. Validar con el negocio precios, opciones y catálogo inicial antes del lanzamiento comercial. No incluye pagos en línea, cuentas de clientes, inventario, delivery ni notificaciones externas.
 
@@ -45,6 +48,7 @@ Las instrucciones de ejecución y despliegue están en [README.md](README.md).
 ## Validación de esta entrega
 
 - 32 pruebas de catálogo y API contra SQLite: aprobadas.
+- 8 pruebas de despliegue: credenciales, compatibilidad de migraciones, conservación de bindings y configuración temporal.
 - 19 escenarios de navegador sobre Pages Functions y D1 local: aprobados, incluidos estados completos, separación de sucursales/estaciones, permisos, móvil, recargas y recuperación sin pedidos duplicados.
 - Build de producción Vite y compilación de Pages Functions: aprobados.
 - Migraciones nuevas y conservación de pedidos del esquema original: verificadas.
