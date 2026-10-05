@@ -1,4 +1,12 @@
-node_modules
-dist
+node_modules/
+dist/
 .env
+.env.*
+!.env.example
 .dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler/
+.test-artifacts/
+playwright-report/
+test-results/

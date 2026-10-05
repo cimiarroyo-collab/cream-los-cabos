@@ -1,0 +1,2 @@
+# Copia a .dev.vars y elige una clave de acceso al Hub (mínimo 16 caracteres).
+HUB_TOKEN="cambia-esta-clave-local"

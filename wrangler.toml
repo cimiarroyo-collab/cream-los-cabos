@@ -1,0 +1,11 @@
+name = "cream-los-cabos"
+compatibility_date = "2025-10-01"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cream-los-cabos"
+# Sustituir por el UUID de la base D1 de producción antes de desplegar.
+# El identificador reservado permite desarrollo local sin tocar producción.
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"

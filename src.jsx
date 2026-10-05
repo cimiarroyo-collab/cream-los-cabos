@@ -1,8 +1,30 @@
-import React,{useEffect,useState}from'react';import{createRoot}from'react-dom/client';import'./style.css';
-const M=[['Flat White',75,'Barra'],['Cabo Sunshine',135,'Barra'],['Croissant',95,'Panadería'],['Avocado Toast',185,'Cocina']],K='cream-orders',F=['Nuevo','Confirmado','En preparación','Listo','Entregado'];const get=async()=>{try{let r=await fetch('/api/orders');if(r.ok)return await r.json()}catch{}return JSON.parse(localStorage.getItem(K)||'[]')};
-const saveLocal=x=>{localStorage.setItem(K,JSON.stringify(x));dispatchEvent(new Event('cream'))};
-const createOrder=async o=>{try{let r=await fetch('/api/orders',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(o)});if(r.ok)return await r.json()}catch{}let a=JSON.parse(localStorage.getItem(K)||'[]');o.id=1048+a.length;saveLocal([o,...a]);return o};
-const setStatus=async(id,status)=>{try{let r=await fetch('/api/orders/'+id,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({status})});if(r.ok)return true}catch{}let a=JSON.parse(localStorage.getItem(K)||'[]'),i=a.findIndex(x=>x.id===id);if(i>=0){a[i].status=status;saveLocal(a)}return true};
-function Club(){let[c,setC]=useState([]),[b,setB]=useState('Palmilla'),[ok,setOk]=useState('');let t=c.reduce((s,x)=>s+x[1],0);let send=async()=>{if(!c.length)return;let o=await createOrder({customer:'Cimi',branch:b,items:c,status:'Nuevo',total:t});setC([]);setOk('Pedido #'+o.id+' enviado ✓')};return <main className="phone"><header>CREAM<small>LOS CABOS</small></header><h1>Good morning, Cimi</h1><p>Good food. Good people. Brighter days.</p><select value={b} onChange={e=>setB(e.target.value)}><option>Palmilla</option><option>Ánima Village</option></select>{ok&&<div className="notice">{ok}</div>}<h2>Ordenar</h2><div className="grid">{M.map((x,i)=><article key={i}><b>{x[0]}</b><span>{'$'}{x[1]} MXN</span><small>{x[2]}</small><button onClick={()=>setC([...c,x])}>Agregar</button></article>)}</div><section className="cart"><b>Tu pedido · {c.length}</b><strong>{'$'}{t} MXN</strong><button onClick={send}>Enviar pedido</button></section></main>}
-function Hub(){let[o,setO]=useState([]);useEffect(()=>{let live=true,f=async()=>{let a=await get();if(live)setO(a)};f();let i=setInterval(f,1500);return()=>{live=false;clearInterval(i)}},[]);let next=async q=>{let n=Math.min(F.indexOf(q.status)+1,4);await setStatus(q.id,F[n]);setO(await get())};return <main className="hub"><aside><h2>CREAM HUB</h2>{['Pedidos','Cocina & Barra','Clientes','Menú','Inventario','Reportes'].map(x=><span>{x}</span>)}</aside><section><header><h1>Pedidos en tiempo real</h1></header><div className="orders">{o.length?o.map(q=><article><em>#{q.id}</em><h3>{q.customer} · {q.branch}</h3><span className="pill">{q.status}</span><ul>{q.items.map(x=><li>{x[0]} <small>→ {x[2]}</small></li>)}</ul><strong>{'$'}{q.total} MXN</strong>{q.status!='Entregado'&&<button onClick={()=>next(q)}>Marcar: {F[Math.min(F.indexOf(q.status)+1,4)]}</button>}</article>):<div className="empty">Esperando pedidos de Cream Club…</div>}</div></section></main>}
-function App(){return <>{location.pathname.startsWith('/hub')?<Hub/>:<Club/>}<nav><a href="/club">Cream Club</a><a href="/hub">Cream Hub</a></nav></>}createRoot(document.getElementById('root')).render(<App/>);
+import React from "react";
+import { createRoot } from "react-dom/client";
+import Club from "./src/components/Club.jsx";
+import Hub from "./src/components/Hub.jsx";
+import "./style.css";
+const hub =
+  location.pathname === "/hub" || location.pathname.startsWith("/hub/");
+document.title = hub ? "Cream Hub · Los Cabos" : "Cream Club · Los Cabos";
+class ErrorBoundary extends React.Component {
+  state = { error: false };
+  static getDerivedStateFromError() {
+    return { error: true };
+  }
+  render() {
+    return this.state.error ? (
+      <main className="fatal-error">
+        <h1>Necesitamos un momento</h1>
+        <p>Recarga la página para volver a Cream.</p>
+        <button className="btn btn-primary" onClick={() => location.reload()}>
+          Volver a intentar
+        </button>
+      </main>
+    ) : (
+      this.props.children
+    );
+  }
+}
+createRoot(document.getElementById("root")).render(
+  <ErrorBoundary>{hub ? <Hub /> : <Club />}</ErrorBoundary>,
+);

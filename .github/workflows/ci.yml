@@ -1,0 +1,41 @@
+name: Cream MVP
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - name: Compile Cloudflare Pages Functions
+        run: npx wrangler pages functions build --outdir /tmp/cream-functions
+      - name: Prepare local D1 and browser
+        run: |
+          printf 'HUB_TOKEN="cream-local-test-token"\n' > .dev.vars
+          npm run db:migrate
+          npx playwright install --with-deps chromium
+      - name: Run Club and Hub end to end
+        run: |
+          npm run pages:dev > /tmp/cream-pages.log 2>&1 &
+          for attempt in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:8788/api/hub/session > /dev/null; then break; fi
+            sleep 1
+          done
+          npm run test:e2e
+      - name: Upload browser failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cream-browser-failures
+          path: /tmp/cream-e2e
+          if-no-files-found: ignore
