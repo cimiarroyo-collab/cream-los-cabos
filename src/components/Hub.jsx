@@ -405,8 +405,14 @@ export default function Hub() {
     return (
       <main className="hub-login">
         <div className="hub-login-scene">
+          <img
+            className="hub-login-photo"
+            src="/brand/location-1.jpg"
+            alt=""
+            decoding="async"
+          />
           <Brand hub />
-          <div>
+          <div className="hub-login-scene-content">
             <span className="hub-eyebrow">
               EL EQUIPO DETRÁS DE CADA BUEN DÍA
             </span>
@@ -563,6 +569,12 @@ export default function Hub() {
           Pedidos<span>{activeCount}</span>
         </a>
         <div className="hub-sidebar-bottom">
+          <div className="hub-sidebar-story" aria-hidden="true">
+            <img src="/brand/icon-pato-azul.svg" alt="" decoding="async" />
+            <span>Good food.</span>
+            <span>Good people.</span>
+            <span>Brighter days.</span>
+          </div>
           <span className="hub-sidebar-locations">
             <Icon name="location" size={18} />
             Palmilla &amp; Ánima Village
@@ -662,7 +674,7 @@ export default function Hub() {
                 <strong>{loaded ? readyCount : "—"}</strong>
               </div>
             </div>
-            <div className="hub-metric">
+            <div className="hub-metric hub-metric-delivered">
               <span className="hub-metric-icon">
                 <Icon name="check" size={21} />
               </span>
@@ -671,7 +683,7 @@ export default function Hub() {
                 <strong>{loaded ? deliveredCount : "—"}</strong>
               </div>
             </div>
-            <div className="hub-metric">
+            <div className="hub-metric hub-metric-sales">
               <span className="hub-metric-icon">
                 <Icon name="leaf" size={21} />
               </span>

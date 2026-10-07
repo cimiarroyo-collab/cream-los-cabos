@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" role="img" aria-labelledby="title">
   <title id="title">Ilustración de una copa de cóctel</title>
-  <rect width="600" height="360" fill="#f3e9d8"/>
+  <rect width="600" height="360" fill="#edebe3"/>
   <ellipse cx="300" cy="297" rx="119" ry="13" fill="#dfd3bd"/>
-  <g stroke="#304b3f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <g stroke="#293b99" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
     <path d="M196 112h208c-11 57-45 88-104 88s-93-31-104-88z" fill="#fcf8ee"/>
     <path d="M206 136h188c-14 36-44 55-94 55s-80-19-94-55z" fill="#ad6547" stroke="none"/>
     <ellipse cx="300" cy="136" rx="94" ry="10" fill="#d6a27e" stroke="none"/>

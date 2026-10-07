@@ -14,6 +14,7 @@ import {
 import { api } from "../api.js";
 import { storage } from "../storage.js";
 import { Brand, Icon, Modal, Quantity } from "./UI.jsx";
+import { BRANCH_INFO, CONTACT_PHONES, WEBSITE_URL } from "../../shared/brand.js";
 
 const CART_KEY = "cream-cart-v2";
 const ORDERS_KEY = "cream-tracking-v2";
@@ -24,6 +25,12 @@ const PENDING_PRICE = "Precio por confirmar en sucursal";
 const priceLabel = (amount) => Number.isFinite(amount) ? formatMoney(amount) : PENDING_PRICE;
 const normalizedSearch = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");
 const isIllustration = (product) => product.image?.endsWith(".svg");
+const DISCOVER_CATEGORIES = [
+  { name: "Café", image: "/brand/tazas.jpg", detail: "Tu pausa favorita" },
+  { name: "Comida", image: "/brand/img-c-pizza.jpg", detail: "Para compartir" },
+  { name: "Panadería", image: "/brand/crossaint.jpg", detail: "Un buen comienzo" },
+  { name: "Bebidas", image: "/brand/img-c-smothie.jpg", detail: "El sabor de Cabo" },
+];
 function validReceiptPricing(order) {
   if (!Array.isArray(order?.items) || !order.items.length) return false;
   if (!order.items.every((item) => item && (item.pricePending === true
@@ -513,6 +520,7 @@ export default function Club() {
               className={view === "menu" ? "active" : ""}
               onClick={() => setView("menu")}
             >
+              <Icon name="utensils" size={18} />
               Menú
             </button>
             <button
@@ -522,7 +530,12 @@ export default function Club() {
                 setSuccess(false);
               }}
             >
+              <Icon name="clock" size={18} />
               Mis pedidos{activeOrder && <span className="nav-dot" />}
+            </button>
+            <button className="mobile-nav-cart" aria-label="Abrir carrito" onClick={() => setCartOpen(true)}>
+              <Icon name="bag" size={18} />
+              Carrito <small>{count}</small>
             </button>
           </nav>
           <button
@@ -539,72 +552,59 @@ export default function Club() {
       <main className="club-main">
         {view === "menu" ? (
           <>
+            <div className="club-welcome">
+              <div className="welcome-copy">
+                <span className="eyebrow">CREAM CLUB · LOS CABOS</span>
+                <h2>{customer.trim() ? `¡Hola, ${customer.trim().split(/\s+/)[0]}!` : "Qué rico tenerte aquí."}</h2>
+                <p>Tu próximo buen momento empieza aquí.</p>
+              </div>
+              <section className="branch-strip" aria-label="Seleccionar sucursal">
+                <div>
+                  <Icon name="location" />
+                  <div>
+                    <span className="eyebrow">TU PUNTO DE ENCUENTRO</span>
+                    <label htmlFor="branch-menu">Sucursal de recolección</label>
+                  </div>
+                </div>
+                <div className="branch-select">
+                  <select id="branch-menu" value={branch} onChange={(event) => setBranch(event.target.value)}>
+                    {BRANCHES.map((value) => <option key={value}>{value}</option>)}
+                  </select>
+                  <Icon name="chevron" size={16} />
+                </div>
+                <span className="pickup-note"><Icon name="clock" size={15} /> {BRANCH_INFO[branch].hours}</span>
+              </section>
+            </div>
             <section className="club-hero">
               <div className="hero-copy">
-                <span className="eyebrow">
-                  <span className="sun-symbol">✳</span> GOOD FOOD. GOOD PEOPLE.
-                </span>
-                <h1>
-                  Los pequeños
-                  <br />
-                  momentos saben
-                  <br />
-                  <i>mejor aquí.</i>
-                </h1>
-                <p>
-                  Tu café favorito, algo recién horneado
-                  <br className="desktop-break" /> y un día que empieza bonito.
-                </p>
-                <a className="btn btn-primary hero-cta" href="#menu">
-                  Encuentra tu favorito
-                  <Icon name="arrow" size={18} />
-                </a>
-                <div className="hero-footnote">
-                  <span className="live-dot" /> Preparado al momento · Hecho con
-                  cariño
-                </div>
+                <span className="eyebrow"><span className="sun-symbol" aria-hidden="true">✳</span> GOOD FOOD. BRIGHTER DAYS.</span>
+                <h1>Buen café.<br />Buena compañía.<br /><i>Los Cabos.</i></h1>
+                <p>Pan artesanal, pizzas al horno y café.<br className="desktop-break" /> Los sabores que nos reúnen, a tu manera.</p>
+                <a className="btn btn-primary hero-cta" href="#menu">Ordenar ahora <Icon name="arrow" size={18} /></a>
+                <div className="hero-footnote"><Icon name="bag" size={16} /> Pide aquí. Recoge en {branch}.</div>
               </div>
               <div className="hero-visual">
-                <img
-                  src="/images/cafe.jpg"
-                  alt="Un espacio de café cálido y acogedor"
-                  fetchPriority="high"
-                />
-                <span className="hero-stamp">
-                  a little
-                  <br />
-                  <i>cream</i>
-                  <br />a lot of joy
-                </span>
-                <div className="hero-caption">
-                  <span>TU PAUSA FAVORITA</span>
-                  <strong>Made for brighter days.</strong>
-                </div>
+                <img src="/brand/location-1.jpg" alt="Interior de Cream Café Los Cabos, fotografía de la web oficial" fetchPriority="high" width="960" height="720" />
+                <span className="hero-stamp"><img src="/brand/icon-pato-azul.svg" alt="" /><span>MADE TO<br />GATHER</span></span>
+                <div className="hero-photo-card" aria-hidden="true"><img src="/brand/tazas.jpg" alt="" /><span>Un café. Un buen día.</span></div>
+                <div className="hero-caption"><span>EN TU LUGAR FAVORITO</span><strong>Nos vemos en Cream.</strong></div>
               </div>
             </section>
-            <section className="branch-strip" aria-label="Seleccionar sucursal">
-              <div>
-                <Icon name="location" />
-                <div>
-                  <span className="eyebrow">NOS VEMOS EN</span>
-                  <label htmlFor="branch-menu">Sucursal de recolección</label>
-                </div>
+            <section className="discover-section" aria-label="Explora los sabores de Cream">
+              <div className="discover-heading"><span className="eyebrow">A CADA MOMENTO, SU ANTOJO</span><a href="#menu">Ver todo el menú <Icon name="arrow" size={15} /></a></div>
+              <div className="discover-grid">
+                {DISCOVER_CATEGORIES.map((item) => (
+                  <button key={item.name} className="discover-card" aria-label={`Explorar ${item.name}`} onClick={() => {
+                    setCategory(item.name);
+                    setSection("Todas");
+                    setSearch("");
+                    document.getElementById("menu")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+                  }}>
+                    <img src={item.image} alt="" loading="lazy" width="360" height="240" />
+                    <span><strong>{item.name}</strong><small>{item.detail}</small></span><Icon name="arrow" size={18} />
+                  </button>
+                ))}
               </div>
-              <div className="branch-select">
-                <select
-                  id="branch-menu"
-                  value={branch}
-                  onChange={(event) => setBranch(event.target.value)}
-                >
-                  {BRANCHES.map((value) => (
-                    <option key={value}>{value}</option>
-                  ))}
-                </select>
-                <Icon name="chevron" size={16} />
-              </div>
-              <span className="pickup-note">
-                <Icon name="bag" size={16} /> Pide aquí. Recoge en sucursal.
-              </span>
             </section>
             {activeOrder && (
               <button
@@ -717,12 +717,21 @@ export default function Club() {
               <p className="menu-source-reference">Precios y disponibilidad se confirman en sucursal. <a href="https://www.creamcafeloscabos.com/cream-menu" target="_blank" rel="noopener noreferrer">Consultar menú oficial<Icon name="arrow" size={12} /></a></p>
             </section>
             <section className="club-promise">
-              <Icon name="leaf" size={28} />
-              <div>
-                <h3>La buena vida, un bocado a la vez.</h3>
-                <p>Hecho al momento en Palmilla y Ánima Village.</p>
+              <img src="/brand/icon-pato-azul.svg" alt="" className="promise-bird" />
+              <div><span className="eyebrow">MÁS QUE UN CAFÉ</span><h3>Un lugar para encontrarnos.</h3><p>Del primer café al último bocado. Así se disfruta Cream.</p></div>
+              <a href={WEBSITE_URL} target="_blank" rel="noopener noreferrer">Conoce nuestra historia <Icon name="arrow" size={17} /></a>
+            </section>
+            <section className="club-locations" aria-label="Visita nuestras sucursales">
+              <div className="locations-heading"><span className="eyebrow">NOS VEMOS EN CREAM</span><h2>Dos lugares. La misma esencia.</h2><p>Todos los días · 7:00 a. m. a 10:00 p. m.</p></div>
+              <div className="locations-grid">
+                {BRANCHES.map((name) => {
+                  const location = BRANCH_INFO[name];
+                  return <article key={name} className={`location-card ${branch === name ? "is-selected" : ""}`}>
+                    <Icon name="location" size={24} />
+                    <div><span className="eyebrow">{name === "Palmilla" ? "SAN JOSÉ DEL CABO" : "CABO DEL SOL"}</span><h3>{location.name}</h3><p>{location.address}</p><a href={location.mapUrl} target="_blank" rel="noopener noreferrer">Cómo llegar <Icon name="arrow" size={15} /></a></div>
+                  </article>;
+                })}
               </div>
-              <span className="promise-word">see you at cream.</span>
             </section>
           </>
         ) : (
@@ -777,12 +786,10 @@ export default function Club() {
       </main>
       <footer className="club-footer">
         <Brand />
-        <p>Good food. Good people. Brighter days.</p>
-        <a href="/hub">
-          Acceso al equipo
-          <Icon name="arrow" size={14} />
-        </a>
-        <span>PALMILLA · ÁNIMA VILLAGE</span>
+        <div className="footer-copy"><p>Good food. Brighter days.</p><span>Café, pan artesanal y buenos momentos en Los Cabos.</span></div>
+        <div className="footer-links"><a href={WEBSITE_URL} target="_blank" rel="noopener noreferrer">Web oficial <Icon name="arrow" size={14} /></a><a href="/hub">Acceso al equipo <Icon name="arrow" size={14} /></a></div>
+        <div className="footer-contact">{CONTACT_PHONES.map((number) => <a key={number} href={`tel:+52${number.replace(/\D/g, "")}`}>{number}</a>)}</div>
+        <span>PALMILLA · ÁNIMA VILLAGE · CREAM LOS CABOS</span>
       </footer>
       {count > 0 && !cartOpen && !editor && (
         <button className="mobile-cart-bar" onClick={() => setCartOpen(true)}>

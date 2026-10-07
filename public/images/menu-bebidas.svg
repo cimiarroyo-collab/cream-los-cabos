@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" role="img" aria-labelledby="title">
   <title id="title">Ilustración de una bebida fresca con cítricos</title>
-  <rect width="600" height="360" fill="#f3e9d8"/>
+  <rect width="600" height="360" fill="#edebe3"/>
   <ellipse cx="297" cy="293" rx="113" ry="14" fill="#dfd3bd"/>
-  <g stroke="#304b3f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <g stroke="#293b99" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
     <path d="M235 113h122l-15 168c-1 6-89 6-91 0z" fill="#fcf8ee"/>
     <path d="m245 158 11 116c1 7 80 7 81 0l10-116z" fill="#dcb887" stroke="none"/>
     <ellipse cx="296" cy="158" rx="51" ry="11" fill="#e7cca4" stroke="#ad6547" stroke-width="2"/>

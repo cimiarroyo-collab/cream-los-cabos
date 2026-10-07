@@ -99,10 +99,11 @@ export function Brand({ hub = false }) {
       href={hub ? "/hub" : "/club"}
       aria-label={hub ? "Cream Hub inicio" : "Cream Club inicio"}
     >
-      <span className="brand-word">
-        cream<span className="brand-dot">.</span>
+      <span className="brand-lockup">
+        <img className="brand-logo" src="/brand/logo-cream-azul.svg" alt="" width="142" height="77" />
+        <img className="brand-bird" src="/brand/icon-pato-azul.svg" alt="" width="127" height="105" />
       </span>
-      <span className="brand-sub">{hub ? "HUB · OPERACIÓN" : "LOS CABOS"}</span>
+      <span className="brand-sub">{hub ? "HUB · OPERACIÓN" : "CLUB · LOS CABOS"}</span>
     </a>
   );
 }

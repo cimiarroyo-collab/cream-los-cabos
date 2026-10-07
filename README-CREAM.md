@@ -1,8 +1,15 @@
-# Cream Los Cabos · MVP 1.2
+# Cream Los Cabos · MVP 1.3
 
 ## Resultado
 
 Se amplió el prototipo existente conservando React/Vite, las rutas `/club` y `/hub` y el binding D1 `DB`. Cloudflare Pages sirve el frontend; Pages Functions gestiona pedidos y acceso. No hay configuración ni dependencias de Netlify.
+
+### Identidad visual
+
+- Paleta de la web oficial: azul `#293B99`, crema `#EDEBE3`, verde `#1A9961`, azul claro `#A6C4D6` y acentos oficiales.
+- Logo y ave oficiales, fotografías locales de Cream, tarjetas visuales de categorías, navegación móvil y tablero con colores por estado.
+- Información pública de Palmilla y Ánima Village: direcciones, horarios y teléfonos; enlaces a mapas y a la web oficial.
+- Los recursos y su procedencia se registran en `public/brand/SOURCES.md`; el uso de la app no requiere descargar recursos externos.
 
 ### Cream Club
 
@@ -15,6 +22,7 @@ Se amplió el prototipo existente conservando React/Vite, las rutas `/club` y `/
 - Pedido real en D1; reintentos identificados para impedir duplicados. Un error conserva el carrito.
 - Comprobante y seguimiento automático de los cinco estados, conservado en el navegador del cliente.
 - Diseño adaptable a móvil y escritorio; diálogos con teclado, etiquetas y estados de carga.
+- Portada con fotografías oficiales, accesos visuales a categorías y navegación inferior en móvil.
 
 ### Cream Hub
 
@@ -28,6 +36,7 @@ Se amplió el prototipo existente conservando React/Vite, las rutas `/club` y `/
 
 ### Arquitectura
 
+- `shared/brand.js`: datos públicos de sucursales y contacto, separados del catálogo y del estado operativo.
 - `shared/menu.js`: carta oficial y metadatos de procedencia, sin inventar precios.
 - `shared/catalog.js`: catálogo fusionado y validación común; el backend calcula los precios conocidos y conserva los pendientes.
 - `src/components/Club.jsx` y `Hub.jsx`: interfaces; `src/api.js`: cliente de API sin fallback de pedidos locales.
@@ -54,6 +63,7 @@ Las instrucciones de ejecución y despliegue están en [README.md](README.md).
 - 41 pruebas de catálogo y API contra SQLite: aprobadas, incluidos pedidos sin precio, pedidos mixtos, persistencia, estados e idempotencia.
 - 8 pruebas de despliegue: credenciales, compatibilidad de migraciones, conservación de bindings y configuración temporal.
 - 29 escenarios de navegador sobre Pages Functions y D1 local: aprobados, incluidos estados completos, separación de sucursales/estaciones, permisos, móvil, recargas, recuperación sin pedidos duplicados y pedidos mixtos con precios pendientes.
+- Auditoría visual en 1440, 768, 390 y 320 px: Club, login y tablero Hub sin desbordamiento, imágenes fallidas ni errores del navegador; navegación móvil fija comprobada.
 - Build de producción Vite y compilación de Pages Functions: aprobados.
 - Migraciones nuevas y conservación de pedidos del esquema original: verificadas.
 - Catálogo contrastado con las seis pestañas oficiales: 254 productos únicos, sin perder porciones distintas ni variantes infantiles.

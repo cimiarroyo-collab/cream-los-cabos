@@ -1,6 +1,6 @@
 # Cream Los Cabos
 
-MVP de pedidos para las sucursales **Palmilla** y **Ánima Village**. React + Vite, API en Cloudflare Pages Functions y pedidos persistidos en Cloudflare D1. No utiliza Netlify.
+MVP de pedidos con la identidad visual oficial de Cream Café Los Cabos, para las sucursales **Palmilla** y **Ánima Village**. React + Vite, API en Cloudflare Pages Functions y pedidos persistidos en Cloudflare D1. No utiliza Netlify.
 
 - **Cream Club · `/club`**: menú por categoría y búsqueda, opciones y notas por producto, carrito editable, selección de sucursal, datos del cliente, envío y seguimiento privado del pedido.
 - **Cream Hub · `/hub`**: acceso del equipo, pedidos sincronizados, filtros de sucursal y estación (Barra, Cocina, Panadería), búsqueda, indicadores y entregados recientes.
@@ -51,7 +51,7 @@ Esta configuración prepara el despliegue. La publicación real requiere los tre
 
 El catálogo común vive en `shared/catalog.js` y `shared/menu.js`: 254 productos únicos de la [carta oficial de Cream](https://www.creamcafeloscabos.com/cream-menu), consultada el 7 de octubre de 2026, más el croissant del prototipo. Incluye Desayunos, Comida, Café, Bebidas, Bar y Vinos; permite filtrar por categoría y sección y buscar sin acentos. Los productos nuevos utilizan ilustraciones locales por categoría.
 
-La carta pública no publica precios. Los 251 productos incorporados quedan con precio `null` y pueden pedirse con la advertencia **«Precio por confirmar en sucursal»** en menú, carrito, comprobante y Hub. Los cuatro productos originales conservan los precios y opciones del prototipo; deben validarse con operación antes del lanzamiento comercial. Las fotografías originales son ilustrativas, no fotografías de las sucursales ni de sus productos reales.
+La carta pública no publica precios. Los 251 productos incorporados quedan con precio `null` y pueden pedirse con la advertencia **«Precio por confirmar en sucursal»** en menú, carrito, comprobante y Hub. Los cuatro productos originales conservan los precios y opciones del prototipo; deben validarse con operación antes del lanzamiento comercial. Las fotografías de la aplicación proceden de la web oficial y se utilizan como imágenes de ambiente y de categorías; no representan necesariamente cada producto o personalización exacta.
 
 Si hay una línea sin precio, la API devuelve `total: null`, `pricingPending: true` y `knownTotal` con el subtotal de las líneas que sí tienen precio. Este subtotal no representa el total final. D1 conserva ese subtotal en la columna original `total` y los indicadores pendientes en las líneas del pedido; no requiere otra migración. Hub identifica los pedidos pendientes y los excluye de su indicador de total con precio. El equipo confirma el importe en sucursal antes del pago.
 
@@ -86,6 +86,8 @@ El navegador usa Chromium del sistema cuando existe; también acepta `CREAM_CHRO
 
 Ver [README-CREAM.md](README-CREAM.md) para el registro de alcance y validaciones del MVP.
 
-## Fotografías
+## Identidad y fotografías
 
-Imágenes ilustrativas alojadas en `public/images/`, obtenidas de Unsplash: [café](https://images.unsplash.com/photo-1511081692775-05d0f180a065), [coffee](https://images.unsplash.com/photo-1509042239860-f550ce710b93), [bebidas](https://images.unsplash.com/photo-1622597467836-f3285f2131b8), [croissant](https://images.unsplash.com/photo-1555507036-ab1f4038808a) y [toast](https://images.unsplash.com/photo-1525351484163-7529414344d8). No dependen de servicios externos durante el uso de la app.
+El diseño utiliza los colores publicados en la [web oficial](https://www.creamcafeloscabos.com/index), su logo, el ave y fotografías del sitio, alojados en `public/brand/`. La procedencia y uso de cada recurso se detalla en [public/brand/SOURCES.md](public/brand/SOURCES.md). Los datos de sucursales viven en `shared/brand.js`. Se mantienen fuentes del sistema para evitar depender del kit tipográfico externo de la web.
+
+Recursos ilustrativos iniciales conservados en el repositorio, alojados en `public/images/`, obtenidas de Unsplash: [café](https://images.unsplash.com/photo-1511081692775-05d0f180a065), [coffee](https://images.unsplash.com/photo-1509042239860-f550ce710b93), [bebidas](https://images.unsplash.com/photo-1622597467836-f3285f2131b8), [croissant](https://images.unsplash.com/photo-1555507036-ab1f4038808a) y [toast](https://images.unsplash.com/photo-1525351484163-7529414344d8). No dependen de servicios externos durante el uso de la app.

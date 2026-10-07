@@ -17,7 +17,7 @@ const ORIGINAL_PRODUCTS = [
     station: "Barra",
     price: 75,
     description: "Espresso intenso, leche sedosa y un momento para ti.",
-    image: "/images/coffee.jpg",
+    image: "/brand/tazas.jpg",
     options: [
       {
         id: "size",
@@ -53,7 +53,7 @@ const ORIGINAL_PRODUCTS = [
     station: "Barra",
     price: 135,
     description: "Una mezcla cítrica y refrescante que sabe a Cabo.",
-    image: "/images/sunshine.jpg",
+    image: "/brand/img-c-smothie.jpg",
     options: [
       {
         id: "sweetness",
@@ -81,7 +81,7 @@ const ORIGINAL_PRODUCTS = [
     station: "Panadería",
     price: 95,
     description: "Capas doradas, mantequilla y ese primer bocado crujiente.",
-    image: "/images/croissant.jpg",
+    image: "/brand/crossaint.jpg",
     options: [
       {
         id: "extra",
@@ -109,7 +109,7 @@ const ORIGINAL_PRODUCTS = [
     station: "Cocina",
     price: 185,
     description: "Pan tostado, aguacate fresco y un toque de la costa.",
-    image: "/images/toast.jpg",
+    image: "/brand/toast.jpg",
     options: [
       {
         id: "egg",

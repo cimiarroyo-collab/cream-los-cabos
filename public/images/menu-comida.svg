@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" role="img" aria-labelledby="title">
   <title id="title">Ilustración de un plato de comida con cubiertos</title>
-  <rect width="600" height="360" fill="#f3e9d8"/>
+  <rect width="600" height="360" fill="#edebe3"/>
   <ellipse cx="300" cy="290" rx="148" ry="14" fill="#dfd3bd"/>
-  <g stroke="#304b3f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <g stroke="#293b99" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="300" cy="178" r="109" fill="#fcf8ee"/>
     <circle cx="300" cy="178" r="90" fill="none" stroke="#c8b89c" stroke-width="2"/>
     <path d="M272 123c13-10 38-9 50 1l32 71c7 15-2 35-20 41-20 9-47 7-66-2-17-8-21-25-14-41z" fill="#dcb887" stroke="#ad6547"/>
@@ -10,7 +10,7 @@
     <path d="M235 154c-27-22-39-9-28 9-20-1-26 15-7 22-16 13-11 28 11 26-9 19 10 29 22 11 12 18 30 8 23-10 19-3 18-20-2-22 13-14 4-30-14-24z" fill="#789174" stroke-width="2"/>
     <path d="m215 180 27 29m-17-44 10 35m-29-3 32 9" fill="none" stroke-width="2"/>
     <circle cx="359" cy="150" r="19" fill="#ad6547" stroke-width="2"/>
-    <path d="m348 150 20-5m-12-7 5 24" fill="none" stroke="#f3e9d8" stroke-width="2"/>
+    <path d="m348 150 20-5m-12-7 5 24" fill="none" stroke="#edebe3" stroke-width="2"/>
     <path d="M151 93v44c0 12 6 18 15 18s15-6 15-18V93m-20 0v46m10-46v46m-5 18v108" fill="none"/>
     <path d="M436 94c-14 10-22 33-22 53v41h16v76h11V94z" fill="#fcf8ee"/>
     <path d="m229 65-9-10m75-7v-13m74 29 10-10" fill="none" stroke="#ad6547" stroke-width="2"/>
