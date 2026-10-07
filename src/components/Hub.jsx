@@ -48,6 +48,8 @@ const dayFormatter = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/Mazatlan",
 });
 const localDay = (value) => dayFormatter.format(timestamp(value));
+const hasPendingPricing = (order) =>
+  order.pricingPending === true || order.total == null;
 
 function orderAge(createdAt, now) {
   const minutes = Math.max(0, Math.floor((now - timestamp(createdAt)) / 60000));
@@ -73,6 +75,7 @@ function OrderCard({ order, station, pending, onAdvance, now }) {
             order.items.some((item) => item.station === name),
         );
   const action = statusActions[order.status];
+  const pricingPending = hasPendingPricing(order);
 
   return (
     <article
@@ -117,6 +120,11 @@ function OrderCard({ order, station, pending, onAdvance, now }) {
                     {item.note && (
                       <p className="hub-item-note">“{item.note}”</p>
                     )}
+                    {(item.pricePending || item.unitPrice === null) && (
+                      <p className="hub-item-price-pending">
+                        Precio por confirmar
+                      </p>
+                    )}
                   </div>
                 </li>
               ))}
@@ -136,8 +144,18 @@ function OrderCard({ order, station, pending, onAdvance, now }) {
       )}
       <div className="hub-order-total">
         <span>Total del pedido</span>
-        <strong>{formatMoney(order.total)}</strong>
+        <strong>
+          {pricingPending ? "Por confirmar" : formatMoney(order.total)}
+        </strong>
       </div>
+      {pricingPending && (
+        <div className="hub-order-pricing-note">
+          <p>Precio pendiente de confirmar en sucursal.</p>
+          {Number.isFinite(order.knownTotal) && order.knownTotal > 0 && (
+            <small>Subtotal con precio: {formatMoney(order.knownTotal)}</small>
+          )}
+        </div>
+      )}
       {action ? (
         <div className="hub-order-action">
           <button
@@ -500,7 +518,11 @@ export default function Hub() {
       order.status === "Entregado" &&
       localDay(order.updatedAt || order.createdAt) === today,
   ).length;
-  const sales = todaysOrders.reduce((sum, order) => sum + order.total, 0);
+  const pricedTodaysOrders = todaysOrders.filter(
+    (order) => !hasPendingPricing(order) && Number.isFinite(order.total),
+  );
+  const pendingPricingCount = todaysOrders.length - pricedTodaysOrders.length;
+  const sales = pricedTodaysOrders.reduce((sum, order) => sum + order.total, 0);
   const query = normalized(search.trim()).replace(/^#/, "");
   const filteredOrders = branchOrders.filter((order) => {
     if (
@@ -654,10 +676,19 @@ export default function Hub() {
                 <Icon name="leaf" size={21} />
               </span>
               <div>
-                <span>Total de hoy</span>
+                <span>Total con precio · hoy</span>
                 <strong className="hub-metric-money">
-                  {loaded ? formatMoney(sales) : "—"}
+                  {loaded && (pricedTodaysOrders.length || !pendingPricingCount)
+                    ? formatMoney(sales)
+                    : "—"}
                 </strong>
+                {loaded && pendingPricingCount > 0 && (
+                  <small className="hub-metric-pricing-note">
+                    {pendingPricingCount}{" "}
+                    {pendingPricingCount === 1 ? "pedido sin" : "pedidos sin"}{" "}
+                    precio final
+                  </small>
+                )}
               </div>
             </div>
           </section>

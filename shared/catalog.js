@@ -1,3 +1,5 @@
+import { MENU_SOURCE, OFFICIAL_PRODUCTS } from "./menu.js";
+
 export const BRANCHES = ["Palmilla", "Ánima Village"];
 export const STATUSES = [
   "Nuevo",
@@ -7,7 +9,7 @@ export const STATUSES = [
   "Entregado",
 ];
 export const STATIONS = ["Barra", "Cocina", "Panadería"];
-export const PRODUCTS = [
+const ORIGINAL_PRODUCTS = [
   {
     id: "flat-white",
     name: "Flat White",
@@ -121,7 +123,37 @@ export const PRODUCTS = [
     ],
   },
 ];
-export const CATEGORIES = ["Todo", "Café", "Bebidas", "Desayunos", "Panadería"];
+const originalIds = new Set(ORIGINAL_PRODUCTS.map((product) => product.id));
+export const PRODUCTS = [
+  ...ORIGINAL_PRODUCTS.map((product) => {
+    const official = OFFICIAL_PRODUCTS.find((entry) => entry.id === product.id);
+    return official
+      ? {
+          ...product,
+          section: official.section,
+          sourceMetadata: {
+            ...MENU_SOURCE,
+            name: official.name,
+            section: official.section,
+            description: official.description,
+          },
+        }
+      : product;
+  }),
+  ...OFFICIAL_PRODUCTS.filter((product) => !originalIds.has(product.id)).map(
+    (product) => ({ ...product, sourceMetadata: { ...MENU_SOURCE } }),
+  ),
+];
+export const CATEGORIES = [
+  "Todo",
+  ...new Set([
+    "Café",
+    "Bebidas",
+    "Desayunos",
+    "Panadería",
+    ...PRODUCTS.map((product) => product.category),
+  ]),
+];
 export const findProduct = (id) =>
   PRODUCTS.find((product) => product.id === id);
 export const defaultSelections = (product) =>
@@ -129,7 +161,7 @@ export const defaultSelections = (product) =>
     product.options.map((group) => [group.id, group.values[0].id]),
   );
 export const formatMoney = (amount) =>
-  new Intl.NumberFormat("es-MX", {
+  amount == null ? "Por confirmar" : new Intl.NumberFormat("es-MX", {
     style: "currency",
     currency: "MXN",
     maximumFractionDigits: 0,
@@ -179,7 +211,8 @@ export function priceItem(raw) {
   const note = (raw.note ?? "").trim();
   if (note.length > 200)
     throw new Error("La nota del producto admite hasta 200 caracteres.");
-  const unitPrice =
+  const pricePending = product.price === null || options.some((option) => option.price === null);
+  const unitPrice = pricePending ? null :
     product.price + options.reduce((sum, option) => sum + option.price, 0);
   return {
     productId: product.id,
@@ -187,7 +220,8 @@ export function priceItem(raw) {
     station: product.station,
     quantity: raw.quantity,
     unitPrice,
-    total: unitPrice * raw.quantity,
+    total: pricePending ? null : unitPrice * raw.quantity,
+    pricePending,
     selections: Object.fromEntries(
       options.map((option) => [option.groupId, option.optionId]),
     ),
@@ -244,7 +278,9 @@ export function normalizeOrderInput(raw) {
     branch: raw.branch,
     items,
     note,
-    total: items.reduce((sum, item) => sum + item.total, 0),
+    // D1's original NOT NULL total retains the subtotal of fully priced lines.
+    // Public responses derive the pending-price flag from the persisted item snapshots.
+    total: items.reduce((sum, item) => sum + (item.total ?? 0), 0),
     requestId: raw.requestId,
   };
 }

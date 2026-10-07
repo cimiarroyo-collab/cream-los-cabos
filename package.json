@@ -1,6 +1,6 @@
 {
   "name": "cream-los-cabos",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "db:migrate": "wrangler d1 migrations apply cream-los-cabos --local",
     "db:migrate:remote": "wrangler d1 migrations apply cream-los-cabos --remote",
     "test": "node --test --test-isolation=none tests/*.test.mjs",
-    "test:e2e": "node tests/e2e.mjs && node tests/recovery.mjs",
+    "test:e2e": "node tests/e2e.mjs && node tests/recovery.mjs && node tests/menu-e2e.mjs",
     "check": "npm run test && npm run build"
   },
   "dependencies": {

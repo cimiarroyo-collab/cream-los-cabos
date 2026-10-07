@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" role="img" aria-labelledby="title">
+  <title id="title">Ilustración de una taza de café</title>
+  <rect width="600" height="360" fill="#f3e9d8"/>
+  <ellipse cx="302" cy="289" rx="124" ry="14" fill="#dfd3bd"/>
+  <g stroke="#304b3f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M361 163h21c27 0 42 19 37 42-5 22-24 34-56 33l1-20c21 0 32-6 34-18 3-12-6-18-24-18h-13z" fill="#fcf8ee"/>
+    <ellipse cx="288" cy="266" rx="106" ry="22" fill="#fcf8ee"/>
+    <ellipse cx="288" cy="266" rx="82" ry="12" fill="none" stroke="#c8b89c" stroke-width="2"/>
+    <path d="M211 151h154v54c0 38-28 62-77 62s-77-24-77-62z" fill="#fcf8ee"/>
+    <path d="M219 211c7 27 31 43 69 43s64-17 69-42" fill="none" stroke="#c8b89c" stroke-width="2"/>
+    <ellipse cx="288" cy="151" rx="77" ry="25" fill="#ad6547"/>
+    <ellipse cx="288" cy="151" rx="64" ry="17" fill="#704432" stroke="none"/>
+    <path d="M263 151c6-10 16-10 25-1 9-9 19-9 25 1-6 10-25 17-25 17s-19-7-25-17z" fill="#e6c49a" stroke="none"/>
+    <path d="M255 111c-22-21 20-26 3-50m33 50c-18-24 19-30 6-58m30 58c-17-18 16-24 7-43" fill="none" stroke="#ad6547" stroke-width="2"/>
+    <path d="M403 251c-7-4-17 0-18 7-2 7 5 15 12 13 9-2 13-14 6-20z" fill="#ad6547" stroke-width="2"/>
+    <path d="m392 268 8-14" fill="none" stroke="#f3e9d8" stroke-width="2"/>
+    <path d="M174 237c-8-3-17 2-17 9 0 8 8 13 15 10 9-4 10-16 2-19z" fill="#ad6547" stroke-width="2"/>
+    <path d="m163 251 10-11" fill="none" stroke="#f3e9d8" stroke-width="2"/>
+  </g>
+</svg>

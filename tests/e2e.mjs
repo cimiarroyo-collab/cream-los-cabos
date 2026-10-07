@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
+import { PRODUCTS } from "../shared/catalog.js";
 
 const baseURL = process.env.CREAM_E2E_URL || "http://127.0.0.1:8788";
 const accessCode = process.env.CREAM_HUB_TOKEN || "cream-local-test-token";
@@ -305,7 +306,7 @@ try {
         .click();
       assert.equal(
         await club.getByRole("button", { name: /^Personalizar / }).count(),
-        1,
+        PRODUCTS.filter((product) => product.category === "Café").length,
       );
       await club
         .getByLabel("Buscar en el menú", { exact: true })
@@ -330,7 +331,7 @@ try {
       await club.getByLabel("Buscar en el menú", { exact: true }).fill("");
       assert.equal(
         await club.getByRole("button", { name: /^Personalizar / }).count(),
-        4,
+        PRODUCTS.length,
       );
     },
   );

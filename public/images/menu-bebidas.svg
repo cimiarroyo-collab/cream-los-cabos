@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" role="img" aria-labelledby="title">
+  <title id="title">Ilustración de una bebida fresca con cítricos</title>
+  <rect width="600" height="360" fill="#f3e9d8"/>
+  <ellipse cx="297" cy="293" rx="113" ry="14" fill="#dfd3bd"/>
+  <g stroke="#304b3f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M235 113h122l-15 168c-1 6-89 6-91 0z" fill="#fcf8ee"/>
+    <path d="m245 158 11 116c1 7 80 7 81 0l10-116z" fill="#dcb887" stroke="none"/>
+    <ellipse cx="296" cy="158" rx="51" ry="11" fill="#e7cca4" stroke="#ad6547" stroke-width="2"/>
+    <path d="m304 211 24-132 26-18" fill="none" stroke="#ad6547" stroke-width="7"/>
+    <path d="m304 211 24-132 26-18" fill="none" stroke="#fcf8ee" stroke-width="2"/>
+    <path d="m258 182 17-7 12 24-21 6zm44 46 25-5 3 24-24 7z" fill="#fcf8ee" stroke="#c8b89c" stroke-width="2" opacity=".85"/>
+    <path d="M244 114c-26 6-54-11-58-37-4-25 13-48 39-53l19 90z" fill="#789174"/>
+    <path d="M236 105c-19 2-38-10-42-29-3-18 10-36 25-42z" fill="#e4d4a7" stroke="#fcf8ee" stroke-width="2"/>
+    <path d="m205 50 31 55m-41-29 41 29m-24-4 24 4" fill="none" stroke="#789174" stroke-width="2"/>
+    <circle cx="383" cy="259" r="29" fill="#789174"/>
+    <circle cx="383" cy="259" r="23" fill="#e4d4a7" stroke="#fcf8ee" stroke-width="2"/>
+    <path d="m383 236 0 46m-23-23h46m-39-16 32 32m-32 0 32-32" fill="none" stroke="#789174" stroke-width="2"/>
+    <path d="M370 164c-3-20 8-37 26-42 0 22-9 37-26 42z" fill="#789174"/>
+    <path d="m372 159 17-28" fill="none" stroke-width="2"/>
+    <path d="m175 156-10 4m211-63 8-8" fill="none" stroke="#ad6547" stroke-width="2"/>
+  </g>
+</svg>

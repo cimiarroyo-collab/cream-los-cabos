@@ -604,3 +604,88 @@ test("internal storage errors never expose query or customer details", async () 
   assert.ok(!body.includes("SECRET"));
   assert.ok(!body.includes("tracking_token"));
 });
+
+test('unpriced orders persist a valid D1 subtotal and remain explicitly pending through tracking and all states', async (t) => {
+  const { env, sql } = database(t);
+  const product = PRODUCTS.find((entry) => entry.price === null);
+  assert.ok(product);
+  const payload = input({ items: [{ productId: product.id, quantity: 2, selections: {} }], total: 1, pricingPending: false });
+  const createdResponse = await call(env, '/api/orders', 'POST', payload);
+  assert.equal(createdResponse.status, 201);
+  const created = await createdResponse.json();
+  assert.equal(created.total, null);
+  assert.equal(created.knownTotal, 0);
+  assert.equal(created.pricingPending, true);
+  assert.equal(created.items[0].unitPrice, null);
+  assert.equal(created.items[0].total, null);
+  assert.equal(created.items[0].pricePending, true);
+  assert.equal(sql.prepare('SELECT total FROM orders WHERE id = ?').get(created.id).total, 0);
+  const cookie = await login(env);
+  const [listed] = await (await call(env, '/api/orders', 'GET', undefined, { Cookie: cookie })).json();
+  assert.equal(listed.total, null);
+  assert.equal(listed.pricingPending, true);
+  for (let index = 1; index < STATUSES.length; index += 1) {
+    const response = await call(env, `/api/orders/${created.id}`, 'PATCH',
+      { expectedStatus: STATUSES[index - 1], status: STATUSES[index] }, { Cookie: cookie });
+    assert.equal(response.status, 200);
+    const updated = await response.json();
+    assert.equal(updated.status, STATUSES[index]);
+    assert.equal(updated.total, null);
+    assert.equal(updated.knownTotal, 0);
+    assert.equal(updated.pricingPending, true);
+  }
+  const tracked = await (await call(env, `/api/orders/${created.id}`, 'GET', undefined,
+    { 'X-Order-Token': created.trackingToken })).json();
+  assert.equal(tracked.total, null);
+  assert.equal(tracked.pricingPending, true);
+  const retry = await call(env, '/api/orders', 'POST', payload);
+  assert.equal(retry.status, 200);
+  assert.equal((await retry.json()).status, 'Entregado');
+  assert.equal(sql.prepare('SELECT count(*) AS n FROM orders').get().n, 1);
+});
+
+test('mixed-price orders expose known subtotal without presenting it as the final total', async (t) => {
+  const { env, sql } = database(t);
+  const product = PRODUCTS.find((entry) => entry.price === null);
+  const response = await call(env, '/api/orders', 'POST', input({ items: [
+    { productId: 'flat-white', quantity: 2, selections: {} },
+    { productId: product.id, quantity: 1, selections: {} },
+  ] }));
+  assert.equal(response.status, 201);
+  const created = await response.json();
+  assert.equal(created.total, null);
+  assert.equal(created.knownTotal, 150);
+  assert.equal(created.pricingPending, true);
+  assert.equal(created.items[0].total, 150);
+  assert.equal(created.items[1].total, null);
+  assert.equal(sql.prepare('SELECT total FROM orders WHERE id = ?').get(created.id).total, 150);
+});
+
+test('idempotent pending-price retries retain the saved snapshot after publication of prices', async (t) => {
+  const { env, sql } = database(t);
+  const product = PRODUCTS.find((entry) => entry.price === null
+    && entry.options.every((group) => group.values[0].price !== null));
+  assert.ok(product);
+  const payload = input({ items: [{ productId: product.id, quantity: 1, selections: {} }] });
+  const created = await (await call(env, '/api/orders', 'POST', payload)).json();
+  const previousPrice = product.price;
+  t.after(() => { product.price = previousPrice; });
+  product.price = 100;
+  const retry = await call(env, '/api/orders', 'POST', payload);
+  assert.equal(retry.status, 200);
+  assert.deepEqual(await retry.json(), created);
+  assert.equal(created.total, null);
+  assert.equal(sql.prepare('SELECT count(*) AS n FROM orders').get().n, 1);
+});
+
+test('read-only pricing flags derive from null item snapshots even when a flag is absent', async (t) => {
+  const { env, sql } = database(t);
+  const created = await (await call(env, '/api/orders', 'POST', input())).json();
+  const snapshot = created.items.map(({ pricePending, ...item }) => ({ ...item, unitPrice: null, total: null }));
+  sql.prepare('UPDATE orders SET items = ? WHERE id = ?').run(JSON.stringify(snapshot), created.id);
+  const tracked = await (await call(env, `/api/orders/${created.id}`, 'GET', undefined,
+    { 'X-Order-Token': created.trackingToken })).json();
+  assert.equal(tracked.total, null);
+  assert.equal(tracked.knownTotal, 150);
+  assert.equal(tracked.pricingPending, true);
+});

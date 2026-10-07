@@ -49,7 +49,11 @@ Esta configuración prepara el despliegue. La publicación real requiere los tre
 
 ## Datos y contrato
 
-El catálogo común vive en `shared/catalog.js`. Conserva los cuatro productos y precios de la base original; sus opciones, textos y fotografías son material inicial que debe validarse con operación antes del lanzamiento comercial. Las fotos son ilustrativas, no fotografías de las sucursales ni de sus productos reales.
+El catálogo común vive en `shared/catalog.js` y `shared/menu.js`: 254 productos únicos de la [carta oficial de Cream](https://www.creamcafeloscabos.com/cream-menu), consultada el 7 de octubre de 2026, más el croissant del prototipo. Incluye Desayunos, Comida, Café, Bebidas, Bar y Vinos; permite filtrar por categoría y sección y buscar sin acentos. Los productos nuevos utilizan ilustraciones locales por categoría.
+
+La carta pública no publica precios. Los 251 productos incorporados quedan con precio `null` y pueden pedirse con la advertencia **«Precio por confirmar en sucursal»** en menú, carrito, comprobante y Hub. Los cuatro productos originales conservan los precios y opciones del prototipo; deben validarse con operación antes del lanzamiento comercial. Las fotografías originales son ilustrativas, no fotografías de las sucursales ni de sus productos reales.
+
+Si hay una línea sin precio, la API devuelve `total: null`, `pricingPending: true` y `knownTotal` con el subtotal de las líneas que sí tienen precio. Este subtotal no representa el total final. D1 conserva ese subtotal en la columna original `total` y los indicadores pendientes en las líneas del pedido; no requiere otra migración. Hub identifica los pedidos pendientes y los excluye de su indicador de total con precio. El equipo confirma el importe en sucursal antes del pago.
 
 El servidor valida productos, opciones, cantidades, cliente y sucursal; calcula precios desde el catálogo e ignora precios o estados enviados por el navegador. El `requestId` evita pedidos duplicados al reintentar una solicitud. Los cambios de estado usan `expectedStatus` para detectar modificaciones concurrentes.
 

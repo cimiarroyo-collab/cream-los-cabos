@@ -20,6 +20,20 @@ const ORDERS_KEY = "cream-tracking-v2";
 const PROFILE_KEY = "cream-profile-v2";
 const PENDING_KEY = "cream-pending-v2";
 const NOTE_KEY = "cream-checkout-note-v2";
+const PENDING_PRICE = "Precio por confirmar en sucursal";
+const priceLabel = (amount) => Number.isFinite(amount) ? formatMoney(amount) : PENDING_PRICE;
+const normalizedSearch = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");
+const isIllustration = (product) => product.image?.endsWith(".svg");
+function validReceiptPricing(order) {
+  if (!Array.isArray(order?.items) || !order.items.length) return false;
+  if (!order.items.every((item) => item && (item.pricePending === true
+    ? item.unitPrice === null && item.total === null
+    : Number.isFinite(item.total) && item.total >= 0 && item.unitPrice !== null))) return false;
+  const pending = order.items.some((item) => item.pricePending === true);
+  return pending
+    ? order.pricingPending === true && order.total === null && Number.isFinite(order.knownTotal) && order.knownTotal >= 0
+    : order.pricingPending !== true && Number.isFinite(order.total) && order.total >= 0;
+}
 function loadCart() {
   const data = storage.get(CART_KEY, []);
   if (!Array.isArray(data)) return [];
@@ -55,8 +69,7 @@ function loadOrders() {
         Number.isFinite(order.createdAt) &&
         Number.isFinite(new Date(order.createdAt).getTime()) &&
         order.createdAt > 0 &&
-        Number.isFinite(order.total) &&
-        order.total >= 0 &&
+        validReceiptPricing(order) &&
         STATUSES.includes(order.status) &&
         Array.isArray(order.items) &&
         order.items.length > 0 &&
@@ -66,7 +79,6 @@ function loadOrders() {
             typeof item.name === "string" &&
             Number.isInteger(item.quantity) &&
             item.quantity > 0 &&
-            Number.isFinite(item.total) &&
             Array.isArray(item.options) &&
             item.options.every(
               (option) => option && typeof option.label === "string",
@@ -93,9 +105,9 @@ function ProductEditor({ product, item, onClose, onSave }) {
   return (
     <Modal title={product.name} onClose={onClose} className="product-modal">
       <img
-        className="product-modal-image"
+        className={`product-modal-image ${isIllustration(product) ? "product-illustration" : ""}`}
         src={product.image}
-        alt={product.name}
+        alt={isIllustration(product) ? `Ilustración de ${product.category}` : product.name}
       />
       <form
         onSubmit={(event) => {
@@ -105,11 +117,12 @@ function ProductEditor({ product, item, onClose, onSave }) {
       >
         <div className="product-modal-body">
           <span className="eyebrow">HECHO A TU GUSTO</span>
-          <div className="product-title-row">
+          <div className={`product-title-row ${product.price === null ? "has-pending-price" : ""}`}>
             <h2>{product.name}</h2>
-            <strong>{formatMoney(product.price)}</strong>
+            <strong className={product.price === null ? "price-pending" : ""}>{priceLabel(product.price)}</strong>
           </div>
           <p className="muted">{product.description}</p>
+          {product.price === null && <p className="pricing-notice">El precio final se confirma en sucursal antes del pago. Puedes agregarlo a tu pedido y dejar tus preferencias en la nota.</p>}
           {product.options.map((group) => (
             <fieldset className="option-group" key={group.id}>
               <legend>{group.label}</legend>
@@ -163,7 +176,7 @@ function ProductEditor({ product, item, onClose, onSave }) {
           />
           <button className="btn btn-primary" type="submit">
             {item ? "Guardar cambios" : "Agregar al carrito"}
-            <span>{formatMoney(priced.total)}</span>
+            <span>{priced.total === null ? "Por confirmar" : formatMoney(priced.total)}</span>
           </button>
         </div>
       </form>
@@ -225,9 +238,10 @@ function TrackingCard({ entry, error, onRefresh }) {
           </span>
         </div>
       </div>
+      {order.pricingPending && <p className="pricing-notice tracking-pricing-notice">{PENDING_PRICE}. El total final se confirma con nuestro equipo al recoger.</p>}
       <details className="tracking-details">
         <summary>
-          Detalle del pedido <strong>{formatMoney(order.total)} MXN</strong>
+          <span>Detalle del pedido</span><strong className={order.pricingPending ? "price-pending" : ""}>{order.pricingPending ? "Por confirmar" : `${formatMoney(order.total)} MXN`}</strong>
         </summary>
         <ul>
           {order.items.map((item, index) => (
@@ -243,11 +257,12 @@ function TrackingCard({ entry, error, onRefresh }) {
                 )}
                 {item.note && <span>Nota: {item.note}</span>}
               </div>
-              <b>{formatMoney(item.total)}</b>
+              <b className={item.pricePending ? "price-pending" : ""}>{priceLabel(item.total)}</b>
             </li>
           ))}
         </ul>
         {order.note && <p className="muted">Nota del pedido: {order.note}</p>}
+        {order.pricingPending && order.knownTotal > 0 && <p className="muted">Productos con precio conocido: {formatMoney(order.knownTotal)} MXN. Faltan los productos por confirmar.</p>}
         <p className="muted">Pago al recoger en sucursal.</p>
       </details>
       {error ? (
@@ -285,6 +300,7 @@ export default function Club() {
     return typeof note === "string" ? note.slice(0, 300) : "";
   });
   const [category, setCategory] = useState("Todo");
+  const [section, setSection] = useState("Todas");
   const [search, setSearch] = useState("");
   const [view, setView] = useState("menu");
   const [editor, setEditor] = useState(null);
@@ -301,14 +317,17 @@ export default function Club() {
   const pollLock = useRef(false);
   const ordersRef = useRef(orders);
   ordersRef.current = orders;
-  const total = cart.reduce((sum, item) => sum + item.total, 0);
+  const pricingPending = cart.some((item) => item.pricePending === true);
+  const knownTotal = cart.reduce((sum, item) => sum + (Number.isFinite(item.total) ? item.total : 0), 0);
+  const total = pricingPending ? null : knownTotal;
   const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const sections = [...new Set(PRODUCTS.filter((product) => category === "Todo" || product.category === category).map((product) => product.section).filter(Boolean))];
+  const query = normalizedSearch(search.trim());
   const filtered = PRODUCTS.filter(
     (product) =>
       (category === "Todo" || category === product.category) &&
-      `${product.name} ${product.description}`
-        .toLocaleLowerCase("es")
-        .includes(search.toLocaleLowerCase("es").trim()),
+      (section === "Todas" || section === product.section) &&
+      normalizedSearch(`${product.name} ${product.description} ${product.section || ""} ${product.category}`).includes(query),
   );
   const orderIds = orders.map((entry) => entry.id).join(",");
   useEffect(() => {
@@ -385,7 +404,7 @@ export default function Club() {
     setCart((current) =>
       current.map((item) =>
         item.key === key
-          ? { ...item, quantity, total: item.unitPrice * quantity }
+          ? { ...item, ...priceItem({ ...item, quantity }) }
           : item,
       ),
     );
@@ -446,7 +465,8 @@ export default function Club() {
       if (
         !Number.isSafeInteger(result?.id) ||
         typeof result.trackingToken !== "string" ||
-        !STATUSES.includes(result.status)
+        !STATUSES.includes(result.status) ||
+        !validReceiptPricing(result)
       )
         throw new Error(
           "No pudimos verificar el envío. Intenta de nuevo para confirmar tu pedido.",
@@ -619,10 +639,10 @@ export default function Club() {
                     <button
                       aria-pressed={category === value}
                       className={category === value ? "active" : ""}
-                      onClick={() => setCategory(value)}
+                      onClick={() => { setCategory(value); setSection("Todas"); }}
                       key={value}
                     >
-                      {value}
+                      <span>{value}</span><small aria-hidden="true">{value === "Todo" ? PRODUCTS.length : PRODUCTS.filter((product) => product.category === value).length}</small>
                     </button>
                   ))}
                 </div>
@@ -637,10 +657,14 @@ export default function Club() {
                   />
                 </label>
               </div>
+              <div className="menu-results-bar">
+                <span role="status" aria-live="polite">{filtered.length} {filtered.length === 1 ? "opción" : "opciones"}{category !== "Todo" ? ` de ${category}` : " para disfrutar"}</span>
+                {sections.length > 1 && <label className="menu-section-filter"><span>Explora por sección</span><select aria-label="Sección del menú" value={section} onChange={(event) => setSection(event.target.value)}><option value="Todas">Todas las secciones</option>{sections.map((value) => <option key={value}>{value}</option>)}</select></label>}
+              </div>
               {filtered.length ? (
                 <div className="product-grid">
                   {filtered.map((product) => (
-                    <article className="product-card" key={product.id}>
+                    <article className={`product-card ${isIllustration(product) ? "product-card-menu" : ""}`} key={product.id}>
                       <button
                         className="product-image-button"
                         tabIndex={-1}
@@ -653,11 +677,12 @@ export default function Club() {
                         </span>
                       </button>
                       <div className="product-card-body">
+                        {isIllustration(product) && <span className="product-context">{product.category}{product.section && product.section !== product.category ? ` · ${product.section}` : ""}</span>}
                         <div className="product-card-heading">
                           <h3>{product.name}</h3>
-                          <strong>{formatMoney(product.price)}</strong>
+                          <strong className={product.price === null ? "price-pending" : ""}>{priceLabel(product.price)}</strong>
                         </div>
-                        <p>{product.description}</p>
+                        {product.description && <p>{product.description}</p>}
                         <button
                           className="product-add"
                           aria-label={`Personalizar ${product.name}`}
@@ -682,12 +707,14 @@ export default function Club() {
                     onClick={() => {
                       setSearch("");
                       setCategory("Todo");
+                      setSection("Todas");
                     }}
                   >
                     Ver todo el menú
                   </button>
                 </div>
               )}
+              <p className="menu-source-reference">Precios y disponibilidad se confirman en sucursal. <a href="https://www.creamcafeloscabos.com/cream-menu" target="_blank" rel="noopener noreferrer">Consultar menú oficial<Icon name="arrow" size={12} /></a></p>
             </section>
             <section className="club-promise">
               <Icon name="leaf" size={28} />
@@ -763,7 +790,7 @@ export default function Club() {
             <Icon name="bag" />
             {count} {count === 1 ? "producto" : "productos"}
           </span>
-          <strong>Ver carrito · {formatMoney(total)}</strong>
+          <strong>Ver carrito · {total === null ? "Por confirmar" : formatMoney(total)}</strong>
           <Icon name="arrow" />
         </button>
       )}
@@ -809,7 +836,7 @@ export default function Club() {
                     <div className="cart-line-content">
                       <div className="cart-line-heading">
                         <h3>{item.name}</h3>
-                        <strong>{formatMoney(item.total)}</strong>
+                        <strong className={item.pricePending ? "price-pending" : ""}>{priceLabel(item.total)}</strong>
                       </div>
                       <p>
                         {item.options
@@ -928,10 +955,11 @@ export default function Club() {
               <div className="checkout-footer">
                 <div className="cart-total">
                   <span>
-                    Total <small>MXN</small>
+                    Total {total !== null && <small>MXN</small>}
                   </span>
-                  <strong>{formatMoney(total)}</strong>
+                  <strong>{total === null ? "Por confirmar" : formatMoney(total)}</strong>
                 </div>
+                {pricingPending && <div className="pricing-notice checkout-pricing-notice" id="checkout-pricing-notice"><strong>{PENDING_PRICE}</strong><p>El total final de este pedido aún no está disponible. Confírmalo con nuestro equipo en sucursal antes del pago.</p>{knownTotal > 0 && <p>Productos con precio conocido: {formatMoney(knownTotal)} MXN. Faltan los productos por confirmar.</p>}</div>}
                 <p>
                   <Icon name="bag" size={16} /> Pago al recoger · Recolección en
                   sucursal
@@ -945,6 +973,7 @@ export default function Club() {
                   className="btn btn-primary checkout-submit"
                   disabled={sending}
                   type="submit"
+                  aria-describedby={pricingPending ? "checkout-pricing-notice" : undefined}
                 >
                   {sending ? "Enviando pedido…" : "Enviar pedido"}
                   <Icon name={sending ? "clock" : "arrow"} />

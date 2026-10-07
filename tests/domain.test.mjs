@@ -4,9 +4,11 @@ import {
   BRANCHES,
   PRODUCTS,
   defaultSelections,
+  formatMoney,
   normalizeOrderInput,
   priceItem,
 } from "../shared/catalog.js";
+import { MENU_SOURCE, OFFICIAL_PRODUCTS } from "../shared/menu.js";
 
 const line = (overrides = {}) => ({
   productId: "flat-white",
@@ -70,7 +72,7 @@ test("all four menu products price customized units and route to the proper stat
       ),
     );
   }
-  assert.equal(PRODUCTS.length, cases.length);
+  assert.ok(cases.every((entry) => PRODUCTS.some((product) => product.id === entry.productId)));
 });
 
 test("omitting customization chooses catalog defaults with no surcharge", () => {
@@ -278,4 +280,76 @@ test("normalization does not mutate customer input or retain editable selection 
   assert.equal(JSON.stringify(raw), original);
   normalized.items[0].selections.milk = "whole";
   assert.equal(raw.items[0].selections.milk, "oat");
+});
+
+test('the complete official catalog merges once and retains original prices and options', () => {
+  assert.equal(new Set(PRODUCTS.map((product) => product.id)).size, PRODUCTS.length);
+  for (const official of OFFICIAL_PRODUCTS) {
+    const merged = PRODUCTS.find((product) => product.id === official.id);
+    assert.ok(merged, official.id);
+    assert.equal(merged.sourceMetadata.url, MENU_SOURCE.url);
+    assert.equal(merged.section, official.section);
+  }
+  for (const [id, price] of [['flat-white', 75], ['cabo-sunshine', 135], ['croissant', 95], ['avocado-toast', 185]]) {
+    const original = PRODUCTS.find((product) => product.id === id);
+    assert.equal(original.price, price);
+    assert.ok(original.options.length > 0);
+  }
+  assert.equal(priceItem(line({ selections: { size: 'large', milk: 'oat', temperature: 'iced' } })).unitPrice, 105);
+});
+
+test('unpublished menu prices remain explicitly pending despite supplied client prices', () => {
+  const product = PRODUCTS.find((entry) => entry.price === null);
+  assert.ok(product, 'The official source does not publish prices for added products');
+  const item = priceItem({ productId: product.id, quantity: 2, selections: {}, unitPrice: 1, total: 2, pricePending: false });
+  assert.equal(item.unitPrice, null);
+  assert.equal(item.total, null);
+  assert.equal(item.pricePending, true);
+  assert.equal(formatMoney(null), 'Por confirmar');
+  assert.equal(formatMoney(0), '$0');
+});
+
+test('a selected extra with an unknown surcharge makes a priced product total pending', (t) => {
+  const product = PRODUCTS.find((entry) => entry.options.some((group) => group.values.some((value) => value.price === null)));
+  assert.ok(product, 'The official catalog includes extras with unpublished surcharges');
+  const group = product.options.find((entry) => entry.values.some((value) => value.price === null));
+  const extra = group.values.find((value) => value.price === null);
+  const previousPrice = product.price;
+  t.after(() => { product.price = previousPrice; });
+  product.price = 100;
+  const item = priceItem({ productId: product.id, quantity: 1, selections: { [group.id]: extra.id } });
+  assert.equal(item.unitPrice, null);
+  assert.equal(item.total, null);
+  assert.equal(item.pricePending, true);
+});
+
+test('mixed-price orders preserve the numeric subtotal of known lines for D1', () => {
+  const pending = PRODUCTS.find((entry) => entry.price === null);
+  const normalized = normalizeOrderInput(order({ items: [line({ quantity: 2 }), { productId: pending.id, quantity: 1, selections: {} }] }));
+  assert.equal(normalized.total, 150);
+  assert.equal(normalized.items[0].pricePending, false);
+  assert.equal(normalized.items[1].pricePending, true);
+  assert.equal(normalizeOrderInput(order({ items: [{ productId: pending.id, quantity: 2, selections: {} }] })).total, 0);
+});
+
+test('black coffees default to no milk and keep their unpublished price pending', () => {
+  for (const productId of [
+    'espresso-2-oz', 'americano-12-oz', 'americanito-8-oz',
+    'coffee-of-the-day', 'bullet-proof-12-oz',
+  ]) {
+    const product = PRODUCTS.find((entry) => entry.id === productId);
+    assert.ok(product, productId);
+    assert.equal(defaultSelections(product).milk, 'none', productId);
+    const item = priceItem({ productId, quantity: 1, selections: {} });
+    assert.equal(item.selections.milk, 'none', productId);
+    assert.equal(item.options.find((option) => option.groupId === 'milk').optionId, 'none', productId);
+    assert.ok(!item.options.some((option) => option.groupId === 'milk' && option.optionId === 'whole'), productId);
+    assert.equal(item.unitPrice, null, productId);
+    assert.equal(item.total, null, productId);
+    assert.equal(item.pricePending, true, productId);
+  }
+  const original = priceItem(line());
+  assert.equal(original.selections.milk, 'whole');
+  assert.equal(original.unitPrice, 75);
+  assert.equal(original.pricePending, false);
 });

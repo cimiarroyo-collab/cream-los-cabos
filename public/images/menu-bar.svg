@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" role="img" aria-labelledby="title">
+  <title id="title">Ilustración de una copa de cóctel</title>
+  <rect width="600" height="360" fill="#f3e9d8"/>
+  <ellipse cx="300" cy="297" rx="119" ry="13" fill="#dfd3bd"/>
+  <g stroke="#304b3f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M196 112h208c-11 57-45 88-104 88s-93-31-104-88z" fill="#fcf8ee"/>
+    <path d="M206 136h188c-14 36-44 55-94 55s-80-19-94-55z" fill="#ad6547" stroke="none"/>
+    <ellipse cx="300" cy="136" rx="94" ry="10" fill="#d6a27e" stroke="none"/>
+    <path d="M300 200v75" fill="none" stroke-width="5"/>
+    <path d="M300 275c-6 0-53 5-58 11-2 3 14 8 58 8s60-5 58-8c-5-6-52-11-58-11z" fill="#fcf8ee"/>
+    <path d="m249 288 102 0" fill="none" stroke="#c8b89c" stroke-width="2"/>
+    <path d="m330 96 35-35" fill="none" stroke="#ad6547" stroke-width="3"/>
+    <path d="M336 87c-1-25 12-42 35-48 1 22-13 41-35 48z" fill="#789174"/>
+    <path d="m339 82 23-32" fill="none" stroke-width="2"/>
+    <path d="M243 112c-23-4-38-26-32-48 5-23 28-37 51-31 23 5 37 28 31 51-4 18-20 30-37 30l-4-18z" fill="#d6a34e"/>
+    <path d="M243 101c-16-4-26-18-22-34 3-16 19-26 35-23 16 4 26 20 22 36-3 11-12 21-24 23l-2-11z" fill="#e7cca4" stroke="#fcf8ee" stroke-width="2"/>
+    <path d="m250 73-8-25m8 25-26-7m26 7-20 19m20-19 24-13m-24 13 20 16" fill="none" stroke="#ad6547" stroke-width="2"/>
+    <path d="m185 192-10 4m244-116 12-6m-25 129 11 8" fill="none" stroke="#ad6547" stroke-width="2"/>
+  </g>
+</svg>

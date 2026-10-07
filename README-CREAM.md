@@ -1,4 +1,4 @@
-# Cream Los Cabos · MVP 1.1
+# Cream Los Cabos · MVP 1.2
 
 ## Resultado
 
@@ -6,7 +6,9 @@ Se amplió el prototipo existente conservando React/Vite, las rutas `/club` y `/
 
 ### Cream Club
 
-- Cuatro productos originales con categorías, búsqueda y fotografías locales.
+- 255 productos: 254 de la carta oficial más el croissant original; ocho filtros de categoría, secciones y búsqueda sin acentos.
+- Carta pública sin precios: los productos nuevos se pueden pedir con precio pendiente explícito; los cuatro originales conservan sus precios configurados.
+- Ilustraciones locales por categoría y fotografías originales; menú verificado contra las seis pestañas oficiales.
 - Personalización de tamaño, leche, temperatura y acompañamientos según producto; precio recalculado y notas.
 - Carrito persistente, cantidades, edición y eliminación.
 - Nombre, teléfono opcional, sucursal de recolección y nota de pedido.
@@ -20,12 +22,14 @@ Se amplió el prototipo existente conservando React/Vite, las rutas `/club` y `/
 - Pedidos de Palmilla y Ánima Village en columnas por estado.
 - Preparación separada por Barra, Cocina y Panadería, conservando opciones y notas.
 - Búsqueda por cliente/pedido, filtros de sucursal, activos/entregados y resumen del día.
+- Precios pendientes y subtotal conocido visibles; el indicador de total con precio excluye pedidos sin importe final.
 - Cambios secuenciales Nuevo → Confirmado → En preparación → Listo → Entregado, con control de concurrencia.
 - Actualizaciones cada cinco segundos y reintento manual; errores visibles sin borrar los últimos pedidos.
 
 ### Arquitectura
 
-- `shared/catalog.js`: catálogo y validación común; el backend calcula todos los precios.
+- `shared/menu.js`: carta oficial y metadatos de procedencia, sin inventar precios.
+- `shared/catalog.js`: catálogo fusionado y validación común; el backend calcula los precios conocidos y conserva los pendientes.
 - `src/components/Club.jsx` y `Hub.jsx`: interfaces; `src/api.js`: cliente de API sin fallback de pedidos locales.
 - `functions/api/orders/[[id]].js`: creación, consulta privada, lista de operación y estados.
 - `functions/api/hub/session.js`: acceso del equipo, expiración y cierre de sesión.
@@ -41,15 +45,16 @@ Sustituir el UUID reservado de D1 por la base real, configurar `HUB_TOKEN` y apl
 
 El workflow de despliegue prepara el identificador de D1 automáticamente en una configuración temporal. Para publicarlo desde GitHub, configurar los secretos indicados en README y ejecutar **Deploy Cream to Cloudflare** en `main`. La presencia del workflow no implica que exista un despliegue público.
 
-El alcance es pedidos para recoger y pago en sucursal. Validar con el negocio precios, opciones y catálogo inicial antes del lanzamiento comercial. No incluye pagos en línea, cuentas de clientes, inventario, delivery ni notificaciones externas.
+El alcance es pedidos para recoger y pago en sucursal. Validar con el negocio los precios y opciones originales y cargar la lista vigente de precios antes del lanzamiento comercial. La carta oficial publicada no indica diferencias de disponibilidad entre Palmilla y Ánima Village; ambos locales utilizan el catálogo común y confirman disponibilidad e importe en sucursal. No incluye pagos en línea, cuentas de clientes, inventario, delivery ni notificaciones externas.
 
 Las instrucciones de ejecución y despliegue están en [README.md](README.md).
 
 ## Validación de esta entrega
 
-- 32 pruebas de catálogo y API contra SQLite: aprobadas.
+- 41 pruebas de catálogo y API contra SQLite: aprobadas, incluidos pedidos sin precio, pedidos mixtos, persistencia, estados e idempotencia.
 - 8 pruebas de despliegue: credenciales, compatibilidad de migraciones, conservación de bindings y configuración temporal.
-- 19 escenarios de navegador sobre Pages Functions y D1 local: aprobados, incluidos estados completos, separación de sucursales/estaciones, permisos, móvil, recargas y recuperación sin pedidos duplicados.
+- 29 escenarios de navegador sobre Pages Functions y D1 local: aprobados, incluidos estados completos, separación de sucursales/estaciones, permisos, móvil, recargas, recuperación sin pedidos duplicados y pedidos mixtos con precios pendientes.
 - Build de producción Vite y compilación de Pages Functions: aprobados.
 - Migraciones nuevas y conservación de pedidos del esquema original: verificadas.
-- Auditoría npm: cero vulnerabilidades.
+- Catálogo contrastado con las seis pestañas oficiales: 254 productos únicos, sin perder porciones distintas ni variantes infantiles.
+- Auditoría npm de la entrega anterior: cero vulnerabilidades.

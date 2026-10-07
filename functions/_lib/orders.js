@@ -39,6 +39,7 @@ export function readOrder(row) {
   } catch {
     items = [];
   }
+  const pricingPending = items.some((item) => item?.pricePending || item?.unitPrice === null || item?.total === null);
   return {
     id: row.id,
     customer: row.customer,
@@ -46,7 +47,9 @@ export function readOrder(row) {
     branch: row.branch,
     items,
     status: row.status,
-    total: row.total,
+    total: pricingPending ? null : row.total,
+    knownTotal: row.total,
+    pricingPending,
     note: row.note || "",
     createdAt: row.created_at,
     updatedAt: row.updated_at || row.created_at,
