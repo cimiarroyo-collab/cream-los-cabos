@@ -1,6 +1,10 @@
 import React, { useEffect, useRef } from "react";
 export function Icon({ name, size = 20, ...props }) {
   const paths = {
+    home: <><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7" /></>,
+    user: <><circle cx="12" cy="7" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></>,
+    card: <><rect x="2" y="5" width="20" height="14" rx="3" /><path d="M2 10h20M6 15h4" /></>,
+    qr: <><rect x="3" y="3" width="6" height="6" rx="1" /><rect x="15" y="3" width="6" height="6" rx="1" /><rect x="3" y="15" width="6" height="6" rx="1" /><path d="M15 15h3v3h3v3h-6v-3M12 3v5M3 12h5M12 12h4M12 18v3M21 12h-2" /></>,
     bag: (
       <>
         <path d="M6 7h12l1 14H5L6 7Z" />

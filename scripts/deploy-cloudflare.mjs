@@ -8,9 +8,14 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PROJECT = "cream-los-cabos";
 const API = "https://api.cloudflare.com/client/v4";
 const INITIAL_MIGRATION = "0001_original_orders.sql";
-const FINAL_MIGRATION = "0002_order_tracking_and_customization.sql";
+const ORDER_MIGRATION = "0002_order_tracking_and_customization.sql";
+const FINAL_MIGRATION = "0003_club_members.sql";
 const BASE_COLUMNS = ["id", "customer", "branch", "items", "status", "total", "created_at"];
 const NEW_COLUMNS = ["phone", "note", "updated_at", "request_id", "tracking_token", "payload_hash"];
+const MEMBER_COLUMNS = {
+  id: "TEXT", access_token_hash: "TEXT", customer: "TEXT", phone: "TEXT",
+  created_at: "INTEGER", updated_at: "INTEGER", request_id: "TEXT", payload_hash: "TEXT",
+};
 
 export function requireCredentials(env) {
   const required = ["CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID", "HUB_TOKEN"];
@@ -27,19 +32,20 @@ export function requireCredentials(env) {
   return { apiToken: env.CLOUDFLARE_API_TOKEN, accountId: env.CLOUDFLARE_ACCOUNT_ID, hubToken: env.HUB_TOKEN };
 }
 
-export function assertMigrationCompatible(columns, migrationNames, tableNames = ["orders"]) {
-  const unexpectedTables = tableNames.filter((name) => name !== "orders" && name !== "d1_migrations" && !name.startsWith("sqlite_") && !name.startsWith("_cf_"));
+export function assertMigrationCompatible(columns, migrationNames, tableNames = ["orders"], memberSchema = null) {
+  const unexpectedTables = tableNames.filter((name) => !["orders", "club_members", "d1_migrations"].includes(name) && !name.startsWith("sqlite_") && !name.startsWith("_cf_"));
   if (unexpectedTables.length) throw new Error("La D1 existente contiene tablas de otra aplicación. Revisar la base antes de desplegar; no se ha modificado.");
   const migrations = new Set(migrationNames);
-  if (migrationNames.some((name) => ![INITIAL_MIGRATION, FINAL_MIGRATION].includes(name))) {
+  if (migrationNames.some((name) => ![INITIAL_MIGRATION, ORDER_MIGRATION, FINAL_MIGRATION].includes(name))) {
     throw new Error("La D1 existente tiene migraciones ajenas a este MVP. Revisar su historial antes de desplegar; no se ha modificado.");
   }
   if (!columns.length) {
     if (migrations.size) throw new Error("La D1 registra migraciones pero no contiene orders. Revisar la base antes de desplegar.");
+    if (tableNames.includes("club_members")) throw new Error("D1 contiene tarjetas sin la tabla orders. Revisar la base antes de desplegar; no se ha modificado.");
     return;
   }
   const names = new Set(columns.map((column) => column.name));
-  if (BASE_COLUMNS.some((name) => !names.has(name)) || columns.some((column) => ![...BASE_COLUMNS, ...NEW_COLUMNS].includes(column.name))) {
+  if (BASE_COLUMNS.some((name) => !names.has(name)) || columns.some((column) => ![...BASE_COLUMNS, ...NEW_COLUMNS, "member_id"].includes(column.name))) {
     throw new Error("La tabla orders existente no coincide con el esquema original de Cream. No se aplicarán migraciones.");
   }
   const id = columns.find((column) => column.name === "id");
@@ -47,12 +53,35 @@ export function assertMigrationCompatible(columns, migrationNames, tableNames = 
     throw new Error("La clave primaria de orders no es compatible con Cream. No se aplicarán migraciones.");
   }
   const newColumns = NEW_COLUMNS.filter((name) => names.has(name));
-  if (migrations.has(FINAL_MIGRATION)) {
+  if (migrations.has(ORDER_MIGRATION)) {
     if (!migrations.has(INITIAL_MIGRATION) || newColumns.length !== NEW_COLUMNS.length) {
       throw new Error("El historial y las columnas de D1 no coinciden. Revisar la base antes de desplegar.");
     }
   } else if (newColumns.length) {
     throw new Error("D1 ya tiene columnas del MVP sin registrar la segunda migración. Conciliar su historial antes de desplegar; no se modificarán ni borrarán datos.");
+  }
+  if (migrations.has(FINAL_MIGRATION)) {
+    const memberColumn = columns.find((column) => column.name === "member_id");
+    const cardColumns = memberSchema?.columns || [];
+    const foreignKeys = memberSchema?.foreignKeys || [];
+    if (
+      !migrations.has(INITIAL_MIGRATION) || !migrations.has(ORDER_MIGRATION) ||
+      !tableNames.includes("club_members") ||
+      !memberColumn || String(memberColumn.type).toUpperCase() !== "TEXT" || Number(memberColumn.notnull) !== 0 || Number(memberColumn.pk) !== 0 ||
+      cardColumns.length !== Object.keys(MEMBER_COLUMNS).length ||
+      new Set(cardColumns.map((column) => column.name)).size !== Object.keys(MEMBER_COLUMNS).length ||
+      cardColumns.some((column) =>
+        MEMBER_COLUMNS[column.name] !== String(column.type).toUpperCase() ||
+        Number(column.pk) !== (column.name === "id" ? 1 : 0) ||
+        (column.name !== "id" && Number(column.notnull) !== 1)) ||
+      foreignKeys.length !== 1 || foreignKeys[0].table !== "club_members" ||
+      foreignKeys[0].from !== "member_id" || foreignKeys[0].to !== "id" ||
+      memberSchema?.uniqueRequestId !== true
+    ) {
+      throw new Error("El historial y el esquema de tarjetas no coinciden con la tercera migración. Revisar D1 antes de desplegar; no se modificarán datos.");
+    }
+  } else if (names.has("member_id") || tableNames.includes("club_members")) {
+    throw new Error("D1 ya tiene tarjetas sin registrar la tercera migración. Conciliar su historial antes de desplegar; no se modificarán ni borrarán datos.");
   }
 }
 
@@ -137,7 +166,20 @@ async function inspectDatabase(api, databaseId) {
     query("PRAGMA table_info(orders)"),
   ]);
   const migrations = tables.some((table) => table.name === "d1_migrations") ? await query("SELECT name FROM d1_migrations ORDER BY id") : [];
-  assertMigrationCompatible(columns, migrations.map((row) => row.name), tables.map((row) => row.name));
+  let memberSchema = null;
+  if (tables.some((table) => table.name === "club_members")) {
+    const [cardColumns, foreignKeys, uniqueRequestId] = await Promise.all([
+      query("PRAGMA table_info(club_members)"),
+      query("PRAGMA foreign_key_list(orders)"),
+      query(`SELECT 1 AS present FROM pragma_index_list('club_members') AS indexes
+        WHERE indexes.[unique] = 1 AND indexes.partial = 0 AND
+        (SELECT COUNT(*) FROM pragma_index_info(indexes.name)) = 1 AND
+        (SELECT name FROM pragma_index_info(indexes.name)) = 'request_id'
+        LIMIT 1`),
+    ]);
+    memberSchema = { columns: cardColumns, foreignKeys, uniqueRequestId: uniqueRequestId.length === 1 };
+  }
+  assertMigrationCompatible(columns, migrations.map((row) => row.name), tables.map((row) => row.name), memberSchema);
 }
 
 async function verifyLive(baseURL, hubToken) {

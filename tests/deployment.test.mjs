@@ -11,6 +11,7 @@ import {
 
 const firstMigration = "0001_original_orders.sql";
 const secondMigration = "0002_order_tracking_and_customization.sql";
+const thirdMigration = "0003_club_members.sql";
 const databaseId = "11111111-2222-4333-8444-555555555555";
 const baselineColumns = [
   { name: "id", type: "INTEGER", pk: 1 },
@@ -24,6 +25,26 @@ const finalColumns = [
     (name) => ({ name, type: "TEXT", pk: 0 }),
   ),
 ];
+const memberOrdersColumns = [
+  ...finalColumns,
+  { name: "member_id", type: "TEXT", pk: 0, notnull: 0 },
+];
+const memberTables = ["orders", "club_members", "d1_migrations"];
+const memberMigrations = [firstMigration, secondMigration, thirdMigration];
+const memberSchema = () => ({
+  columns: Object.entries({
+    id: "TEXT",
+    access_token_hash: "TEXT",
+    customer: "TEXT",
+    phone: "TEXT",
+    created_at: "INTEGER",
+    updated_at: "INTEGER",
+    request_id: "TEXT",
+    payload_hash: "TEXT",
+  }).map(([name, type]) => ({ name, type, pk: name === "id" ? 1 : 0, notnull: name === "id" ? 0 : 1 })),
+  foreignKeys: [{ table: "club_members", from: "member_id", to: "id" }],
+  uniqueRequestId: true,
+});
 const credentials = {
   CLOUDFLARE_API_TOKEN: "private-api-token-fixture",
   CLOUDFLARE_ACCOUNT_ID: "a".repeat(32),
@@ -99,6 +120,83 @@ test("D1 preflight stops on partial upgrades, inconsistent migration history and
   assert.throws(() => assertMigrationCompatible([], [firstMigration], ["d1_migrations"]), /no contiene orders/);
   assert.throws(() => assertMigrationCompatible(finalColumns, [firstMigration, secondMigration, "0003_other_app.sql"]), /migraciones ajenas/);
   assert.throws(() => assertMigrationCompatible(baselineColumns, [], ["orders", "unrelated_customers"]), /tablas de otra aplicación/);
+});
+
+test("D1 preflight accepts the complete Club migration without changing its schema or history", () => {
+  const cards = memberSchema();
+  const inputs = [memberOrdersColumns, memberMigrations, memberTables, cards];
+  const unchanged = structuredClone(inputs);
+  assert.doesNotThrow(() => assertMigrationCompatible(...inputs));
+  assert.deepEqual(inputs, unchanged);
+});
+
+test("D1 preflight rejects Club data without the third migration or its previous migrations", () => {
+  assert.throws(() => assertMigrationCompatible(memberOrdersColumns, [firstMigration, secondMigration], memberTables, memberSchema()), /sin registrar la tercera migración/);
+  assert.throws(() => assertMigrationCompatible(finalColumns, [firstMigration, secondMigration], memberTables, memberSchema()), /sin registrar la tercera migración/);
+  assert.throws(() => assertMigrationCompatible(memberOrdersColumns, [firstMigration, secondMigration]), /sin registrar la tercera migración/);
+  assert.throws(() => assertMigrationCompatible(memberOrdersColumns, [secondMigration, thirdMigration], memberTables, memberSchema()), /historial y las columnas/);
+  assert.throws(() => assertMigrationCompatible(memberOrdersColumns, [firstMigration, thirdMigration], memberTables, memberSchema()), /sin registrar la segunda migración/);
+  assert.throws(() => assertMigrationCompatible(baselineColumns, [firstMigration, thirdMigration], memberTables, memberSchema()), /tercera migración/);
+});
+
+test("D1 preflight rejects partial Club upgrades and cards without an orders table", () => {
+  assert.throws(() => assertMigrationCompatible([], [], ["club_members"], memberSchema()), /tarjetas sin la tabla orders/);
+  assert.throws(() => assertMigrationCompatible([], memberMigrations, ["club_members", "d1_migrations"], memberSchema()), /no contiene orders/);
+  assert.throws(() => assertMigrationCompatible(finalColumns, memberMigrations, memberTables, memberSchema()), /tercera migración/);
+  assert.throws(() => assertMigrationCompatible(memberOrdersColumns, memberMigrations, ["orders", "d1_migrations"], memberSchema()), /tercera migración/);
+  assert.throws(() => assertMigrationCompatible(memberOrdersColumns, memberMigrations, memberTables), /tercera migración/);
+  const partial = memberSchema();
+  partial.columns = partial.columns.filter(({ name }) => name !== "access_token_hash");
+  assert.throws(() => assertMigrationCompatible(memberOrdersColumns, memberMigrations, memberTables, partial), /tercera migración/);
+});
+
+test("D1 preflight requires a nullable TEXT membership association on orders", () => {
+  for (const invalid of [
+    { type: "INTEGER" },
+    { notnull: 1 },
+    { pk: 1 },
+  ]) {
+    const columns = memberOrdersColumns.map((column) => column.name === "member_id" ? { ...column, ...invalid } : column);
+    assert.throws(() => assertMigrationCompatible(columns, memberMigrations, memberTables, memberSchema()), /tercera migración/);
+  }
+});
+
+test("D1 preflight validates Club column names, storage types, nullability and primary key", () => {
+  for (const [name, invalid] of [
+    ["access_token_hash", { name: "public_access_token" }],
+    ["created_at", { type: "TEXT" }],
+    ["customer", { notnull: 0 }],
+    ["id", { pk: 0 }],
+    ["request_id", { pk: 1 }],
+  ]) {
+    const cards = memberSchema();
+    cards.columns = cards.columns.map((column) => column.name === name ? { ...column, ...invalid } : column);
+    assert.throws(() => assertMigrationCompatible(memberOrdersColumns, memberMigrations, memberTables, cards), /tercera migración/);
+  }
+  const duplicate = memberSchema();
+  duplicate.columns = duplicate.columns.map((column) => column.name === "payload_hash" ? { ...column, name: "request_id" } : column);
+  assert.throws(() => assertMigrationCompatible(memberOrdersColumns, memberMigrations, memberTables, duplicate), /tercera migración/);
+});
+
+test("D1 preflight requires the member_id foreign key and the unique card request index", () => {
+  for (const foreignKeys of [
+    [],
+    [{ table: "other_members", from: "member_id", to: "id" }],
+    [{ table: "club_members", from: "customer", to: "id" }],
+    [{ table: "club_members", from: "member_id", to: "request_id" }],
+    [...memberSchema().foreignKeys, { table: "club_members", from: "phone", to: "phone" }],
+  ]) {
+    assert.throws(() => assertMigrationCompatible(memberOrdersColumns, memberMigrations, memberTables, { ...memberSchema(), foreignKeys }), /tercera migración/);
+  }
+  for (const uniqueRequestId of [false, undefined, 1]) {
+    assert.throws(() => assertMigrationCompatible(memberOrdersColumns, memberMigrations, memberTables, { ...memberSchema(), uniqueRequestId }), /tercera migración/);
+  }
+});
+
+test("D1 preflight rejects unrelated tables, migrations and order columns alongside Club cards", () => {
+  assert.throws(() => assertMigrationCompatible(memberOrdersColumns, memberMigrations, [...memberTables, "another_app_members"], memberSchema()), /tablas de otra aplicación/);
+  assert.throws(() => assertMigrationCompatible(memberOrdersColumns, [...memberMigrations, "0004_other_app.sql"], memberTables, memberSchema()), /migraciones ajenas/);
+  assert.throws(() => assertMigrationCompatible([...memberOrdersColumns, { name: "external_user_id", type: "TEXT", pk: 0 }], memberMigrations, memberTables, memberSchema()), /esquema original/);
 });
 
 test("Pages preflight preserves the matching Git project, main branch and existing DB binding", () => {

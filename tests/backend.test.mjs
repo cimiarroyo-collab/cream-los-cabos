@@ -294,6 +294,22 @@ test("Hub orders filter by exact branch and reject invalid branches", async (t) 
   );
 });
 
+test("Hub retains old orders delivered today and excludes orders completed over a day ago", async (t) => {
+  const { env, sql } = database(t);
+  const clock = Date.now();
+  const daysAgo = clock - 3 * 24 * 60 * 60 * 1000;
+  const old = await (await call(env, "/api/orders", "POST", input())).json();
+  const expired = await (await call(env, "/api/orders", "POST", input())).json();
+  sql.prepare("UPDATE orders SET created_at = ?, updated_at = ?, status = 'Listo' WHERE id = ?").run(daysAgo, daysAgo, old.id);
+  sql.prepare("UPDATE orders SET created_at = ?, updated_at = ?, status = 'Entregado' WHERE id = ?").run(daysAgo, daysAgo, expired.id);
+  const cookie = await login(env);
+  const delivered = await call(env, `/api/orders/${old.id}`, "PATCH", { expectedStatus: "Listo", status: "Entregado" }, { Cookie: cookie });
+  assert.equal(delivered.status, 200);
+  const rows = await (await call(env, "/api/orders", "GET", undefined, { Cookie: cookie })).json();
+  assert.deepEqual(rows.map((row) => row.id), [old.id]);
+  assert.equal(rows[0].status, "Entregado");
+});
+
 test("the complete state machine allows only successive steps and detects stale writes", async (t) => {
   const { env } = database(t);
   const created = await (
@@ -566,6 +582,9 @@ test("additive migrations preserve legacy orders and render tuple items for Hub"
       "utf8",
     ),
   );
+  sql.exec(readFileSync(new URL("../migrations/0003_club_members.sql", import.meta.url), "utf8"));
+  assert.equal(sql.prepare("SELECT member_id FROM orders WHERE id = 1").get().member_id, null);
+  assert.equal(sql.prepare("SELECT COUNT(*) AS total FROM club_members").get().total, 0);
   const cookie = await login(env);
   const [legacy] = await (
     await call(env, "/api/orders", "GET", undefined, { Cookie: cookie })

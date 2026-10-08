@@ -35,8 +35,8 @@ async function request(path, options = {}) {
   return data;
 }
 export const api = {
-  createOrder: (order) =>
-    request("/api/orders", { method: "POST", body: JSON.stringify(order) }),
+  createOrder: (order, memberToken) =>
+    request("/api/orders", { method: "POST", body: JSON.stringify(order), ...(memberToken ? { headers: { "X-Member-Token": memberToken } } : {}) }),
   getOrder: (id, token) =>
     request(`/api/orders/${encodeURIComponent(id)}`, {
       headers: { "X-Order-Token": token },
@@ -57,4 +57,9 @@ export const api = {
       body: JSON.stringify({ token }),
     }),
   logout: () => request("/api/hub/session", { method: "DELETE" }),
+  createMember: (profile) => request("/api/members", { method: "POST", body: JSON.stringify(profile) }),
+  getMember: (id, token) => request(`/api/members/${encodeURIComponent(id)}`, token ? { headers: { "X-Member-Token": token } } : {}),
+  updateMember: (id, token, profile) => request(`/api/members/${encodeURIComponent(id)}`, {
+    method: "PATCH", headers: { "X-Member-Token": token }, body: JSON.stringify(profile),
+  }),
 };

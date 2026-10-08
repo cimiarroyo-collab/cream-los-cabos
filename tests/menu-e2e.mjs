@@ -32,6 +32,14 @@ async function openCart() {
   return cart;
 }
 
+async function chooseSection(name) {
+  await club.locator(".section-chips").getByRole("button", { name, exact: true }).click();
+}
+
+async function visibleProductNames() {
+  return club.getByRole("button", { name: /^Personalizar / }).evaluateAll(elements => elements.map(element => element.getAttribute("aria-label")));
+}
+
 async function trackingStatus(id, status) {
   await club.waitForFunction(
     ({ orderId, state }) => document.querySelector(`[aria-label="Estado del pedido #${orderId}"]`)?.textContent === state,
@@ -78,31 +86,65 @@ async function assertReceipt(id) {
 }
 
 try {
-  await step("The full menu exposes all six official categories, pizzas, pastas and wines", async () => {
+  await step("The menu opens with favorites and exposes all categories through compact sections", async () => {
     await club.goto("/club");
     await club.getByRole("button", { name: "Personalizar Flat White", exact: true }).waitFor();
-    assert.equal(await club.getByRole("button", { name: /^Personalizar / }).count(), PRODUCTS.length);
+    assert.equal(await club.getByRole("button", { name: /^Personalizar / }).count(), 4);
     const categories = club.getByRole("group", { name: "Categorías del menú", exact: true });
     for (const name of ["Desayunos", "Comida", "Café", "Bebidas", "Bar", "Vinos"]) {
       await categories.getByRole("button", { name, exact: true }).waitFor();
     }
     await categories.getByRole("button", { name: "Comida", exact: true }).click();
-    await club.getByLabel("Sección del menú", { exact: true }).selectOption("Pizzas");
+    await chooseSection("Pizzas");
     assert.equal(await club.getByRole("button", { name: /^Personalizar / }).count(), 6);
-    await club.getByLabel("Buscar en el menú", { exact: true }).fill("margárita");
+    await club.getByLabel("Buscar en el menú", { exact: true }).fill("margárita pizza");
     await club.getByRole("button", { name: "Personalizar Margarita Pizza", exact: true }).waitFor();
     assert.equal(await club.getByRole("button", { name: /^Personalizar / }).count(), 1);
     await club.getByLabel("Buscar en el menú", { exact: true }).fill("");
-    await club.getByLabel("Sección del menú", { exact: true }).selectOption("Pastas");
+    await chooseSection("Pastas");
     assert.equal(await club.getByRole("button", { name: /^Personalizar / }).count(), 5);
     await club.getByRole("button", { name: "Personalizar Lasagna", exact: true }).waitFor();
     await categories.getByRole("button", { name: "Vinos", exact: true }).click();
-    assert.equal(await club.getByRole("button", { name: /^Personalizar / }).count(), PRODUCTS.filter((product) => product.category === "Vinos").length);
+    assert.equal(await club.getByRole("button", { name: /^Personalizar / }).count(), PRODUCTS.filter((product) => product.category === "Vinos" && product.section === "Tintos por copa y botella").length);
     await club.getByLabel("Buscar en el menú", { exact: true }).fill("Oporto Grahams 20");
     assert.equal(await club.getByRole("button", { name: /^Personalizar / }).count(), 1);
     await club.getByLabel("Buscar en el menú", { exact: true }).fill("");
     await categories.getByRole("button", { name: "Comida", exact: true }).click();
+    await chooseSection("Pizzas");
+  });
+
+  await step("Long sections stay at six products and global search reaches products in other categories", async () => {
+    const categories = club.getByRole("group", { name: "Categorías del menú", exact: true });
+    await categories.getByRole("button", { name: "Café", exact: true }).click();
+    assert.equal(await club.getByRole("button", { name: /^Personalizar / }).count(), 6);
+    const firstPage = await visibleProductNames();
+    const pages = club.getByRole("navigation", { name: "Páginas del menú", exact: true });
+    await pages.getByRole("button", { name: "Siguiente", exact: true }).click();
+    assert.equal(await club.getByRole("button", { name: /^Personalizar / }).count(), 2);
+    assert.ok((await visibleProductNames()).every(name => !firstPage.includes(name)));
+    assert.match(await pages.textContent(), /Página 2 de 2/);
+    assert.ok(await pages.getByRole("button", { name: "Siguiente", exact: true }).isDisabled());
+    await pages.getByRole("button", { name: "Anterior", exact: true }).click();
+    assert.deepEqual(await visibleProductNames(), firstPage);
+    await club.getByLabel("Buscar en el menú", { exact: true }).fill("lasagna");
+    await club.getByRole("button", { name: "Personalizar Lasagna", exact: true }).waitFor();
+    assert.equal(await club.getByRole("button", { name: /^Personalizar / }).count(), 1);
+    await categories.getByRole("button", { name: "Bar", exact: true }).click();
+    await chooseSection("Cocteles clásicos");
+    assert.equal(await club.getByRole("button", { name: /^Personalizar / }).count(), 6);
+    await pages.getByRole("button", { name: "Siguiente", exact: true }).click();
+    await categories.getByRole("button", { name: "Comida", exact: true }).click();
+    assert.equal(await club.getByLabel("Buscar en el menú", { exact: true }).inputValue(), "");
+    assert.equal(await club.getByLabel("Sección del menú", { exact: true }).inputValue(), "Pizzas");
+    assert.equal(await pages.count(), 0);
+    await club.setViewportSize({ width: 390, height: 844 });
+    await club.getByLabel("Sección del menú", { exact: true }).selectOption("Pastas");
+    await club.getByRole("button", { name: "Personalizar Lasagna", exact: true }).waitFor();
+    const layout = await club.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth }));
+    assert.ok(layout.scroll <= layout.width + 1, "The section menu must fit a phone viewport");
+    assert.doesNotMatch(await club.locator("body").innerText(), /\p{Extended_Pictographic}/u);
     await club.getByLabel("Sección del menú", { exact: true }).selectOption("Pizzas");
+    await club.setViewportSize({ width: 1280, height: 900 });
   });
 
   await step("A pizza with unpublished prices can be customized and mixed with a priced coffee", async () => {

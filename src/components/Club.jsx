@@ -14,6 +14,7 @@ import {
 import { api } from "../api.js";
 import { storage } from "../storage.js";
 import { Brand, Icon, Modal, Quantity } from "./UI.jsx";
+import ClubMember from "./ClubMember.jsx";
 import { BRANCH_INFO, CONTACT_PHONES, WEBSITE_URL } from "../../shared/brand.js";
 
 const CART_KEY = "cream-cart-v2";
@@ -21,10 +22,15 @@ const ORDERS_KEY = "cream-tracking-v2";
 const PROFILE_KEY = "cream-profile-v2";
 const PENDING_KEY = "cream-pending-v2";
 const NOTE_KEY = "cream-checkout-note-v2";
+const MEMBER_KEY = "cream-member-v1";
+const MEMBER_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PENDING_PRICE = "Precio por confirmar en sucursal";
 const priceLabel = (amount) => Number.isFinite(amount) ? formatMoney(amount) : PENDING_PRICE;
 const normalizedSearch = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");
-const isIllustration = (product) => product.image?.endsWith(".svg");
+const MENU_PAGE_SIZE = 6;
+const FEATURED_IDS = ["flat-white", "cabo-sunshine", "croissant", "avocado-toast"];
+const productSection = (product) => product.section || product.category;
+const productPhotoAlt = (product) => product.imageAlt || `Fotografía de referencia de ${product.name}`;
 const DISCOVER_CATEGORIES = [
   { name: "Café", image: "/brand/tazas.jpg", detail: "Tu pausa favorita" },
   { name: "Comida", image: "/brand/img-c-pizza.jpg", detail: "Para compartir" },
@@ -112,9 +118,9 @@ function ProductEditor({ product, item, onClose, onSave }) {
   return (
     <Modal title={product.name} onClose={onClose} className="product-modal">
       <img
-        className={`product-modal-image ${isIllustration(product) ? "product-illustration" : ""}`}
+        className="product-modal-image"
         src={product.image}
-        alt={isIllustration(product) ? `Ilustración de ${product.category}` : product.name}
+        alt={productPhotoAlt(product)}
       />
       <form
         onSubmit={(event) => {
@@ -307,9 +313,14 @@ export default function Club() {
     return typeof note === "string" ? note.slice(0, 300) : "";
   });
   const [category, setCategory] = useState("Todo");
-  const [section, setSection] = useState("Todas");
+  const [section, setSection] = useState("");
   const [search, setSearch] = useState("");
-  const [view, setView] = useState("menu");
+  const [page, setPage] = useState(1);
+  const [view, setView] = useState("home");
+  const [member, setMember] = useState(() => {
+    const saved = storage.get(MEMBER_KEY, null);
+    return saved && MEMBER_UUID.test(saved.id || "") && MEMBER_UUID.test(saved.token || "") && typeof saved.customer === "string" && typeof saved.phone === "string" ? saved : null;
+  });
   const [editor, setEditor] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [orders, setOrders] = useState(loadOrders);
@@ -328,14 +339,54 @@ export default function Club() {
   const knownTotal = cart.reduce((sum, item) => sum + (Number.isFinite(item.total) ? item.total : 0), 0);
   const total = pricingPending ? null : knownTotal;
   const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const sections = [...new Set(PRODUCTS.filter((product) => category === "Todo" || product.category === category).map((product) => product.section).filter(Boolean))];
+  const categoryProducts = PRODUCTS.filter((product) => product.category === category);
+  const sections = [...new Set(categoryProducts.map(productSection))];
+  const selectedSection = sections.includes(section) ? section : sections[0];
   const query = normalizedSearch(search.trim());
-  const filtered = PRODUCTS.filter(
-    (product) =>
-      (category === "Todo" || category === product.category) &&
-      (section === "Todas" || section === product.section) &&
-      normalizedSearch(`${product.name} ${product.description} ${product.section || ""} ${product.category}`).includes(query),
-  );
+  const featured = FEATURED_IDS.map(findProduct).filter(Boolean);
+  const filtered = query
+    ? PRODUCTS.filter((product) => normalizedSearch(`${product.name} ${product.description} ${productSection(product)} ${product.category}`).includes(query))
+    : category === "Todo"
+      ? featured
+      : categoryProducts.filter((product) => productSection(product) === selectedSection);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / MENU_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const visibleProducts = filtered.slice((currentPage - 1) * MENU_PAGE_SIZE, currentPage * MENU_PAGE_SIZE);
+  const showingFeatured = category === "Todo" && !query;
+  function chooseCategory(value) {
+    setView("menu");
+    setCategory(value);
+    setSection(productSection(PRODUCTS.find((product) => product.category === value) || { category: value }));
+    setSearch("");
+    setPage(1);
+  }
+  function chooseSection(value) {
+    setSection(value);
+    setPage(1);
+  }
+  function changePage(value) {
+    setPage(value);
+    document.getElementById("menu-products")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+  }
+  function saveMember(next) {
+    const saved = storage.set(MEMBER_KEY, next);
+    setMember(next);
+    setCustomer(next.customer);
+    setPhone(next.phone);
+    return saved;
+  }
+  function navigate(nextView) {
+    setView(nextView);
+    setSuccess(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+  function trackMemberOrder(id) {
+    if (!ordersRef.current.some(entry => entry.id === id)) {
+      setToast("Este pedido está en tu historial. Su comprobante completo se conserva en el navegador donde lo hiciste.");
+      return;
+    }
+    navigate("orders");
+  }
   const orderIds = orders.map((entry) => entry.id).join(",");
   useEffect(() => {
     storage.set(CART_KEY, cart);
@@ -449,6 +500,7 @@ export default function Club() {
         note,
       })),
       note: orderNote,
+      ...(member ? { memberId: member.id } : {}),
     };
     const fingerprint = JSON.stringify(payload);
     const pending = pendingRef.current ?? storage.get(PENDING_KEY, null);
@@ -468,7 +520,7 @@ export default function Club() {
     pendingRef.current = { fingerprint, requestId: payload.requestId };
     storage.set(PENDING_KEY, pendingRef.current);
     try {
-      const result = await api.createOrder(payload);
+      const result = await api.createOrder(payload, member?.token);
       if (
         !Number.isSafeInteger(result?.id) ||
         typeof result.trackingToken !== "string" ||
@@ -516,9 +568,10 @@ export default function Club() {
         <div className="club-header-inner">
           <Brand />
           <nav className="club-nav" aria-label="Navegación Cream Club">
+            <button className={view === "home" ? "active" : ""} onClick={() => navigate("home")}><Icon name="home" size={18} />Inicio</button>
             <button
               className={view === "menu" ? "active" : ""}
-              onClick={() => setView("menu")}
+              onClick={() => navigate("menu")}
             >
               <Icon name="utensils" size={18} />
               Menú
@@ -533,10 +586,8 @@ export default function Club() {
               <Icon name="clock" size={18} />
               Mis pedidos{activeOrder && <span className="nav-dot" />}
             </button>
-            <button className="mobile-nav-cart" aria-label="Abrir carrito" onClick={() => setCartOpen(true)}>
-              <Icon name="bag" size={18} />
-              Carrito <small>{count}</small>
-            </button>
+            <button className={["rewards", "qr"].includes(view) ? "active" : ""} onClick={() => navigate("rewards")}><Icon name="card" size={18} />Club</button>
+            <button className={view === "profile" ? "active" : ""} onClick={() => navigate("profile")}><Icon name="user" size={18} />Perfil</button>
           </nav>
           <button
             className="cart-trigger"
@@ -550,8 +601,9 @@ export default function Club() {
         </div>
       </header>
       <main className="club-main">
-        {view === "menu" ? (
+        {view === "menu" || view === "home" ? (
           <>
+            {view === "home" && <>
             <div className="club-welcome">
               <div className="welcome-copy">
                 <span className="eyebrow">CREAM CLUB · LOS CABOS</span>
@@ -577,10 +629,10 @@ export default function Club() {
             </div>
             <section className="club-hero">
               <div className="hero-copy">
-                <span className="eyebrow"><span className="sun-symbol" aria-hidden="true">✳</span> GOOD FOOD. BRIGHTER DAYS.</span>
+                <span className="eyebrow"><img className="hero-brand-mark" src="/brand/icon-pato-azul.svg" alt="" width="22" height="24" /> GOOD FOOD. BRIGHTER DAYS.</span>
                 <h1>Buen café.<br />Buena compañía.<br /><i>Los Cabos.</i></h1>
                 <p>Pan artesanal, pizzas al horno y café.<br className="desktop-break" /> Los sabores que nos reúnen, a tu manera.</p>
-                <a className="btn btn-primary hero-cta" href="#menu">Ordenar ahora <Icon name="arrow" size={18} /></a>
+                <button className="btn btn-primary hero-cta" onClick={() => navigate("menu")}>Ordenar ahora <Icon name="arrow" size={18} /></button>
                 <div className="hero-footnote"><Icon name="bag" size={16} /> Pide aquí. Recoge en {branch}.</div>
               </div>
               <div className="hero-visual">
@@ -591,13 +643,11 @@ export default function Club() {
               </div>
             </section>
             <section className="discover-section" aria-label="Explora los sabores de Cream">
-              <div className="discover-heading"><span className="eyebrow">A CADA MOMENTO, SU ANTOJO</span><a href="#menu">Ver todo el menú <Icon name="arrow" size={15} /></a></div>
+              <div className="discover-heading"><span className="eyebrow">A CADA MOMENTO, SU ANTOJO</span><button className="text-button" onClick={() => navigate("menu")}>Ver todo el menú <Icon name="arrow" size={15} /></button></div>
               <div className="discover-grid">
                 {DISCOVER_CATEGORIES.map((item) => (
                   <button key={item.name} className="discover-card" aria-label={`Explorar ${item.name}`} onClick={() => {
-                    setCategory(item.name);
-                    setSection("Todas");
-                    setSearch("");
+                    chooseCategory(item.name);
                     document.getElementById("menu")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
                   }}>
                     <img src={item.image} alt="" loading="lazy" width="360" height="240" />
@@ -619,6 +669,8 @@ export default function Club() {
                 <Icon name="arrow" size={16} />
               </button>
             )}
+            </>}
+            {view === "menu" && <div className="menu-pickup-bar"><Icon name="location" size={18} /><label htmlFor="menu-pickup-branch">Recoger en</label><select id="menu-pickup-branch" value={branch} onChange={event => setBranch(event.target.value)}>{BRANCHES.map(name => <option key={name}>{name}</option>)}</select><button className="text-button" onClick={() => { navigate("home"); requestAnimationFrame(() => document.getElementById("cream-locations")?.scrollIntoView({ behavior: "smooth" })); }}>Ver sucursales<Icon name="arrow" size={15} /></button></div>}
             <section id="menu" className="menu-section">
               <div className="section-heading">
                 <div>
@@ -626,7 +678,7 @@ export default function Club() {
                   <h2>¿Qué se te antoja?</h2>
                 </div>
                 <span className="menu-subtitle">
-                  Un favorito para cada momento.
+                  Explora una sección a la vez.
                 </span>
               </div>
               <div className="menu-tools">
@@ -637,12 +689,12 @@ export default function Club() {
                 >
                   {CATEGORIES.map((value) => (
                     <button
-                      aria-pressed={category === value}
-                      className={category === value ? "active" : ""}
-                      onClick={() => { setCategory(value); setSection("Todas"); }}
+                      aria-pressed={category === value && !query}
+                      className={category === value && !query ? "active" : ""}
+                      onClick={() => chooseCategory(value)}
                       key={value}
                     >
-                      <span>{value}</span><small aria-hidden="true">{value === "Todo" ? PRODUCTS.length : PRODUCTS.filter((product) => product.category === value).length}</small>
+                      <span>{value === "Todo" ? "Inicio" : value}</span>{value !== "Todo" && <small aria-hidden="true">{PRODUCTS.filter((product) => product.category === value).length}</small>}
                     </button>
                   ))}
                 </div>
@@ -651,33 +703,42 @@ export default function Club() {
                   <input
                     type="search"
                     aria-label="Buscar en el menú"
-                    placeholder="Busca tu favorito"
+                    placeholder="Buscar en todo el menú"
                     value={search}
-                    onChange={(event) => setSearch(event.target.value)}
+                    onChange={(event) => { setSearch(event.target.value); setPage(1); }}
                   />
+                  {search && <button type="button" aria-label="Limpiar búsqueda" onClick={() => { setSearch(""); setPage(1); }}><Icon name="close" size={16} /></button>}
                 </label>
               </div>
-              <div className="menu-results-bar">
-                <span role="status" aria-live="polite">{filtered.length} {filtered.length === 1 ? "opción" : "opciones"}{category !== "Todo" ? ` de ${category}` : " para disfrutar"}</span>
-                {sections.length > 1 && <label className="menu-section-filter"><span>Explora por sección</span><select aria-label="Sección del menú" value={section} onChange={(event) => setSection(event.target.value)}><option value="Todas">Todas las secciones</option>{sections.map((value) => <option key={value}>{value}</option>)}</select></label>}
+              {!query && category !== "Todo" && (
+                <div className="menu-sections">
+                  <div className="menu-sections-heading"><span className="eyebrow">SECCIONES DE {category.toLocaleUpperCase("es")}</span><span>{sections.length} {sections.length === 1 ? "sección" : "secciones"}</span></div>
+                  <div className="section-chips" role="group" aria-label={`Secciones de ${category}`}>
+                    {sections.map((value) => <button type="button" key={value} className={selectedSection === value ? "active" : ""} aria-pressed={selectedSection === value} onClick={() => chooseSection(value)}>{value}<small aria-hidden="true">{categoryProducts.filter((product) => productSection(product) === value).length}</small></button>)}
+                  </div>
+                  <label className="menu-section-filter"><span>Cambiar sección</span><select aria-label="Sección del menú" value={selectedSection} onChange={(event) => chooseSection(event.target.value)}>{sections.map((value) => <option key={value}>{value}</option>)}</select></label>
+                </div>
+              )}
+              <div id="menu-products" className="menu-results-bar">
+                <div><span className="eyebrow">{query ? "EN TODO EL MENÚ" : showingFeatured ? "PARA EMPEZAR" : category.toLocaleUpperCase("es")}</span><h3>{query ? "Resultados de búsqueda" : showingFeatured ? "Favoritos de Cream" : selectedSection}</h3></div>
+                <span role="status" aria-live="polite">{showingFeatured ? `${featured.length} favoritos · ${PRODUCTS.length} opciones por descubrir` : `${filtered.length} ${filtered.length === 1 ? "opción" : "opciones"}${filtered.length > MENU_PAGE_SIZE ? ` · ${((currentPage - 1) * MENU_PAGE_SIZE) + 1}–${Math.min(currentPage * MENU_PAGE_SIZE, filtered.length)} visibles` : ""}`}</span>
               </div>
               {filtered.length ? (
-                <div className="product-grid">
-                  {filtered.map((product) => (
-                    <article className={`product-card ${isIllustration(product) ? "product-card-menu" : ""}`} key={product.id}>
+                <div className={`product-grid ${showingFeatured ? "product-grid-featured" : ""}`}>
+                  {visibleProducts.map((product) => (
+                    <article className="product-card" key={product.id}>
                       <button
                         className="product-image-button"
-                        tabIndex={-1}
-                        aria-hidden="true"
+                        aria-label={`Ver ${product.name}`}
                         onClick={() => setEditor({ product })}
                       >
-                        <img src={product.image} alt="" loading="lazy" />
+                        <img src={product.image} alt={productPhotoAlt(product)} loading="lazy" width="640" height="480" />
                         <span className="product-category">
                           {product.category}
                         </span>
                       </button>
                       <div className="product-card-body">
-                        {isIllustration(product) && <span className="product-context">{product.category}{product.section && product.section !== product.category ? ` · ${product.section}` : ""}</span>}
+                        <span className="product-context">{productSection(product)}</span>
                         <div className="product-card-heading">
                           <h3>{product.name}</h3>
                           <strong className={product.price === null ? "price-pending" : ""}>{priceLabel(product.price)}</strong>
@@ -704,24 +765,23 @@ export default function Club() {
                   <p>Prueba otro nombre o explora todo el menú.</p>
                   <button
                     className="btn btn-secondary"
-                    onClick={() => {
-                      setSearch("");
-                      setCategory("Todo");
-                      setSection("Todas");
-                    }}
+                    onClick={() => chooseCategory("Todo")}
                   >
-                    Ver todo el menú
+                    Explorar las secciones
                   </button>
                 </div>
               )}
-              <p className="menu-source-reference">Precios y disponibilidad se confirman en sucursal. <a href="https://www.creamcafeloscabos.com/cream-menu" target="_blank" rel="noopener noreferrer">Consultar menú oficial<Icon name="arrow" size={12} /></a></p>
+              {pageCount > 1 && <nav className="menu-pagination" aria-label="Páginas del menú"><button className="btn btn-secondary" type="button" disabled={currentPage === 1} onClick={() => changePage(currentPage - 1)}><Icon name="arrow" className="pagination-back" size={16} />Anterior</button><span aria-live="polite">Página {currentPage} de {pageCount}</span><button className="btn btn-secondary" type="button" disabled={currentPage === pageCount} onClick={() => changePage(currentPage + 1)}>Siguiente<Icon name="arrow" size={16} /></button></nav>}
+              {showingFeatured && <p className="menu-browse-hint"><Icon name="grid" size={16} /> Elige una categoría para descubrir sus secciones y todos sus productos.</p>}
+              <p className="menu-source-reference">Fotografías de referencia. Precios y disponibilidad se confirman en sucursal. <a href="https://www.creamcafeloscabos.com/cream-menu" target="_blank" rel="noopener noreferrer">Consultar menú oficial<Icon name="arrow" size={12} /></a></p>
             </section>
+            {view === "home" && <>
             <section className="club-promise">
               <img src="/brand/icon-pato-azul.svg" alt="" className="promise-bird" />
               <div><span className="eyebrow">MÁS QUE UN CAFÉ</span><h3>Un lugar para encontrarnos.</h3><p>Del primer café al último bocado. Así se disfruta Cream.</p></div>
               <a href={WEBSITE_URL} target="_blank" rel="noopener noreferrer">Conoce nuestra historia <Icon name="arrow" size={17} /></a>
             </section>
-            <section className="club-locations" aria-label="Visita nuestras sucursales">
+            <section id="cream-locations" className="club-locations" aria-label="Visita nuestras sucursales">
               <div className="locations-heading"><span className="eyebrow">NOS VEMOS EN CREAM</span><h2>Dos lugares. La misma esencia.</h2><p>Todos los días · 7:00 a. m. a 10:00 p. m.</p></div>
               <div className="locations-grid">
                 {BRANCHES.map((name) => {
@@ -733,8 +793,9 @@ export default function Club() {
                 })}
               </div>
             </section>
+            </>}
           </>
-        ) : (
+        ) : view === "orders" ? (
           <section className="orders-page">
             <span className="eyebrow">CONTIGO, HASTA EL ÚLTIMO BOCADO</span>
             <h1>Mis pedidos</h1>
@@ -782,7 +843,7 @@ export default function Club() {
               consultarlos.
             </p>
           </section>
-        )}
+        ) : <><nav className="member-view-tabs" aria-label="Tu Cream Club"><button className={view === "rewards" ? "active" : ""} onClick={() => navigate("rewards")}>Tarjeta e historial</button><button className={view === "qr" ? "active" : ""} onClick={() => navigate("qr")}><Icon name="qr" size={16} />Mi QR</button><button className={view === "profile" ? "active" : ""} onClick={() => navigate("profile")}>Mis datos</button></nav><ClubMember view={view} member={member} customer={customer} phone={phone} onMemberSaved={saveMember} onExplore={() => navigate("menu")} onTrackOrder={trackMemberOrder} /></>}
       </main>
       <footer className="club-footer">
         <Brand />
@@ -898,6 +959,7 @@ export default function Club() {
                 ))}
               </div>
               <div className="checkout-fields">
+                <span className="eyebrow">CHECKOUT · RECOGE EN SUCURSAL</span>
                 <h3>¿Para quién preparamos?</h3>
                 <label className="field">
                   <span>Nombre</span>

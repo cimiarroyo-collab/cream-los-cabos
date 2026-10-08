@@ -306,7 +306,7 @@ try {
         .click();
       assert.equal(
         await club.getByRole("button", { name: /^Personalizar / }).count(),
-        PRODUCTS.filter((product) => product.category === "Café").length,
+        6,
       );
       await club
         .getByLabel("Buscar en el menú", { exact: true })
@@ -318,7 +318,7 @@ try {
         })
         .waitFor();
       await club
-        .getByRole("button", { name: "Ver todo el menú", exact: true })
+        .getByRole("button", { name: "Explorar las secciones", exact: true })
         .click();
       await club.getByLabel("Buscar en el menú", { exact: true }).fill("croi");
       assert.equal(
@@ -331,7 +331,7 @@ try {
       await club.getByLabel("Buscar en el menú", { exact: true }).fill("");
       assert.equal(
         await club.getByRole("button", { name: /^Personalizar / }).count(),
-        PRODUCTS.length,
+        4,
       );
     },
   );

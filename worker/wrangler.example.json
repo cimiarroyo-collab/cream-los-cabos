@@ -1,0 +1,19 @@
+{
+  "name": "cream-los-cabos-preview",
+  "main": "entry.mjs",
+  "compatibility_date": "2025-10-01",
+  "workers_dev": true,
+  "keep_vars": true,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api", "/api/*"]
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "cream-los-cabos-preview",
+    "database_id": "00000000-0000-0000-0000-000000000000",
+    "migrations_dir": "migrations"
+  }]
+}

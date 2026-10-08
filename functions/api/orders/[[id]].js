@@ -15,6 +15,7 @@ import {
   handleApi,
 } from "../../_lib/api.js";
 import { readOrder, canonicalJson } from "../../_lib/orders.js";
+import { authorizedMember, isMemberUuid } from "../../_lib/members.js";
 
 function orderId(value) {
   const parts = Array.isArray(value) ? value : value ? [value] : [];
@@ -46,7 +47,7 @@ async function existingOrder(db, requestId, payloadHash) {
   return apiResponse({ ...readOrder(row), trackingToken: row.tracking_token });
 }
 
-async function createOrder(request, db) {
+async function createOrder(request, db, env) {
   checkOrigin(request);
   const raw = await readJson(request);
   let order;
@@ -54,6 +55,14 @@ async function createOrder(request, db) {
     order = normalizeOrderInput(raw);
   } catch (error) {
     throw new ApiError(400, error.message || "Revisa los datos de tu pedido.");
+  }
+  let memberId = null;
+  if (raw.memberId != null) {
+    if (!isMemberUuid(raw.memberId)) {
+      throw new ApiError(400, "Selecciona una tarjeta de Cream Club válida.");
+    }
+    memberId = raw.memberId.toLowerCase();
+    await authorizedMember(request, db, env, memberId);
   }
   // Hash the customer's intent, rather than prices/labels that may change with a menu update.
   const payloadHash = await digest(
@@ -63,6 +72,8 @@ async function createOrder(request, db) {
       branch: order.branch,
       note: order.note || "",
       requestId: order.requestId,
+      // Preserve legacy hashes for guests while preventing retries from reattaching a card.
+      ...(memberId ? { memberId } : {}),
       items: order.items.map(({ productId, quantity, selections, note }) => ({
         productId,
         quantity,
@@ -82,8 +93,8 @@ async function createOrder(request, db) {
       .prepare(
         `
       INSERT INTO orders (customer, phone, branch, items, status, total, note,
-        created_at, updated_at, request_id, tracking_token, payload_hash)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *
+        created_at, updated_at, request_id, tracking_token, payload_hash${memberId ? ", member_id" : ""})
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?${memberId ? ", ?" : ""}) RETURNING *
     `,
       )
       .bind(
@@ -99,6 +110,7 @@ async function createOrder(request, db) {
         order.requestId,
         trackingToken,
         payloadHash,
+        ...(memberId ? [memberId] : []),
       )
       .first();
   } catch (error) {
@@ -139,7 +151,7 @@ async function listOrders(request, db, env) {
   // Active orders come first; include completed orders from the last day for operational history.
   const filter = branch ? "AND branch = ?" : "";
   const query = db.prepare(`SELECT * FROM orders
-    WHERE (status != 'Entregado' OR created_at >= ?) ${filter}
+    WHERE (status != 'Entregado' OR COALESCE(updated_at, created_at) >= ?) ${filter}
     ORDER BY CASE WHEN status = 'Entregado' THEN 1 ELSE 0 END,
       CASE WHEN status != 'Entregado' THEN created_at END ASC, created_at DESC
     LIMIT 500`);
@@ -208,7 +220,7 @@ export async function onRequest(context) {
       });
     }
     const db = requireDatabase(env);
-    if (request.method === "POST") return createOrder(request, db);
+    if (request.method === "POST") return createOrder(request, db, env);
     if (request.method === "PATCH") return updateOrder(request, db, env, id);
     return id === null
       ? listOrders(request, db, env)

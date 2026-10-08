@@ -8,6 +8,7 @@ import {
   formatTime,
 } from "../../shared/catalog.js";
 import { Brand, Icon } from "./UI.jsx";
+import HubMemberCard from "./HubMemberCard.jsx";
 import "./Hub.css";
 
 const statusActions = {
@@ -206,6 +207,9 @@ export default function Hub() {
   const [notice, setNotice] = useState("");
   const [lastUpdated, setLastUpdated] = useState(null);
   const [pendingIds, setPendingIds] = useState(new Set());
+  const [memberLookup, setMemberLookup] = useState(() =>
+    new URLSearchParams(window.location.search).get("member"),
+  );
   const requestVersion = useRef(0);
   const refreshesInFlight = useRef(new Map());
   const refreshRef = useRef(null);
@@ -398,6 +402,15 @@ export default function Hub() {
             "No pudimos comprobar el acceso. Intenta de nuevo.",
         );
       }
+    }
+  }
+
+  function closeMemberLookup() {
+    setMemberLookup(null);
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("member")) {
+      url.searchParams.delete("member");
+      window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
     }
   }
 
@@ -599,6 +612,10 @@ export default function Hub() {
             CREAM LOS CABOS <span aria-hidden="true">/</span> OPERACIÓN
           </span>
           <div className="hub-topbar-actions">
+            <button type="button" className="hub-member-lookup-action"
+              aria-label="Consultar tarjeta Club" onClick={() => setMemberLookup("")}>
+              <Icon name="qr" size={18} /><span>Tarjeta Club</span>
+            </button>
             <span
               className={`hub-connection ${error ? "is-offline" : ""}`}
               role="status"
@@ -944,6 +961,7 @@ export default function Hub() {
           </footer>
         </div>
       </main>
+      {memberLookup !== null && <HubMemberCard initialId={memberLookup} onClose={closeMemberLookup} />}
     </div>
   );
 }
