@@ -1,0 +1,317 @@
+{
+  "cosmopolitan": {
+    "image": "/photos/drinks/bar/cosmopolitan.jpg",
+    "alt": "Cosmopolitan rosado servido en copa de coctel, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Cosmopolitan_-_CrystalMixer.jpg",
+    "license": "CC BY 4.0",
+    "licenseURL": "https://creativecommons.org/licenses/by/4.0",
+    "photographer": "CrystalMixer - CrystalMixer.com",
+    "sourceTitle": "File:Cosmopolitan - CrystalMixer.jpg",
+    "illustrative": true
+  },
+  "mint-julep": {
+    "image": "/photos/drinks/bar/mint-julep.jpg",
+    "alt": "Mint Julep con hielo triturado y menta, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Kentucky_Derby_in_St._John%27s_-_2_mint_juleps.jpg",
+    "license": "CC BY 2.0",
+    "licenseURL": "https://creativecommons.org/licenses/by/2.0",
+    "photographer": "Jeremy T. Hetzel",
+    "sourceTitle": "File:Kentucky Derby in St. John's - 2 mint juleps.jpg",
+    "illustrative": true
+  },
+  "ipa": {
+    "image": "/photos/drinks/bar/ipa.jpg",
+    "alt": "Cerveza IPA dorada con espuma en vaso sin marca, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:IPA_in_a_pint_glass_in_a_hand.jpeg",
+    "license": "CC BY-SA 3.0",
+    "licenseURL": "https://creativecommons.org/licenses/by-sa/3.0",
+    "photographer": "User:misterkong",
+    "sourceTitle": "File:IPA in a pint glass in a hand.jpeg",
+    "illustrative": true
+  },
+  "rum-dark": {
+    "image": "/photos/drinks/bar/rum-dark.jpg",
+    "alt": "Ron añejo de tono ámbar servido en vaso sin marca, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:A_glass_of_rum.jpg",
+    "license": "CC BY 2.0",
+    "licenseURL": "https://creativecommons.org/licenses/by/2.0",
+    "photographer": "Linus Bohman from Malmö, Sweden",
+    "sourceTitle": "File:A glass of rum.jpg",
+    "illustrative": true
+  },
+  "clerico": {
+    "image": "/photos/drinks/bar/clerico.jpg",
+    "alt": "Clericot de vino blanco con fruta, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Hippie_Kitchen,_Jefferson_Highway,_Old_Jefferson_Louisiana_White_Sangria.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseURL": "https://creativecommons.org/licenses/by-sa/4.0",
+    "photographer": "Infrogmation of New Orleans",
+    "sourceTitle": "File:Hippie Kitchen, Jefferson Highway, Old Jefferson Louisiana White Sangria.jpg",
+    "illustrative": true
+  },
+  "lager": {
+    "image": "/photos/drinks/bar/lager.jpg",
+    "alt": "Cerveza lager dorada con espuma en vaso sin marca, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Lager.jpg",
+    "license": "CC BY-SA 3.0",
+    "licenseURL": "http://creativecommons.org/licenses/by-sa/3.0/",
+    "photographer": "Secretlondon (Wikimedia Commons)",
+    "sourceTitle": "File:Lager.jpg",
+    "illustrative": true
+  },
+  "mimosa": {
+    "image": "/photos/drinks/bar/mimosa.jpg",
+    "alt": "Mimosa de naranja y vino espumoso en copa, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Blood_orange_mimosas,_January_2011.jpg",
+    "license": "CC BY 2.0",
+    "licenseURL": "https://creativecommons.org/licenses/by/2.0",
+    "photographer": "John Taylor",
+    "sourceTitle": "File:Blood orange mimosas, January 2011.jpg",
+    "illustrative": true
+  },
+  "old-fashioned": {
+    "image": "/photos/drinks/bar/old-fashioned.jpg",
+    "alt": "Old Fashioned ámbar con hielo y naranja, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Images_of_drinks_with_neutral_Background;_Old_Fashioned_(cocktail),_Whisky.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseURL": "https://creativecommons.org/licenses/by-sa/4.0",
+    "photographer": "Qwertzu111111",
+    "sourceTitle": "File:Images of drinks with neutral Background; Old Fashioned (cocktail), Whisky.jpg",
+    "illustrative": true
+  },
+  "margarita": {
+    "image": "/photos/drinks/bar/margarita.jpg",
+    "alt": "Margarita de tequila con cítricos y borde de sal, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Blended_margarita_cocktail_drink.jpg",
+    "license": "Public domain",
+    "licenseURL": "",
+    "photographer": "Jon Sullivan",
+    "sourceTitle": "File:Blended margarita cocktail drink.jpg",
+    "illustrative": true
+  },
+  "carajillo": {
+    "image": "/photos/drinks/bar/carajillo.jpg",
+    "alt": "Carajillo de café y licor servido en vaso, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Carajillo_1.JPG",
+    "license": "CC BY 3.0",
+    "licenseURL": "https://creativecommons.org/licenses/by/3.0",
+    "photographer": "Gordito1869",
+    "sourceTitle": "File:Carajillo 1.JPG",
+    "illustrative": true
+  },
+  "negroni": {
+    "image": "/photos/drinks/bar/negroni.jpg",
+    "alt": "Negroni rojo con hielo y naranja, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Negroni_(cocktail).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseURL": "https://creativecommons.org/licenses/by-sa/4.0",
+    "photographer": "Sudhertzen",
+    "sourceTitle": "File:Negroni (cocktail).jpg",
+    "illustrative": true
+  },
+  "martini": {
+    "image": "/photos/drinks/bar/martini.jpg",
+    "alt": "Martini transparente en copa con aceituna, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Dry_Martini-2.jpg",
+    "license": "Public domain",
+    "licenseURL": "",
+    "photographer": "Dry_Martini.jpg: Original uploader was Hayford Peirce at en.wikipedia\nderivative work: Sigmundausfaller (talk)",
+    "sourceTitle": "File:Dry Martini-2.jpg",
+    "illustrative": true
+  },
+  "spirit-clear": {
+    "image": "/photos/drinks/bar/spirit-clear.jpg",
+    "alt": "Destilado transparente en vaso sin marca, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Smirnoff_vodka_shot.png",
+    "license": "CC BY 2.0",
+    "licenseURL": "https://creativecommons.org/licenses/by/2.0",
+    "photographer": "William Warby",
+    "sourceTitle": "File:Smirnoff vodka shot.png",
+    "illustrative": true
+  },
+  "spirit-gold": {
+    "image": "/photos/drinks/bar/spirit-gold.jpg",
+    "alt": "Tequila reposado o añejo dorado en vaso sin marca; referencia generada ilustrativa, no fotografía del producto real.",
+    "sourceURL": "/photos/drinks/bar/spirit-gold.source.json",
+    "sourceTitle": "Tequila reposado o añejo dorado — referencia generada con OpenAI image_gen",
+    "license": "Imagen generada con OpenAI image_gen",
+    "licenseURL": "https://openai.com/policies/terms-of-use/",
+    "photographer": "OpenAI image_gen (referencia generada)",
+    "illustrative": true,
+    "generated": true,
+    "modifications": "Referencia generada digitalmente; redimensionada a 720 px y comprimida a JPEG."
+  },
+  "mezcalita": {
+    "image": "/photos/drinks/bar/mezcalita.jpg",
+    "alt": "Mezcalita de cítricos y hierbas con hielo, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Guelaguetza_Restaurante_-_February_2024_-_Sarah_Stierch_05.jpg",
+    "license": "CC BY 4.0",
+    "licenseURL": "https://creativecommons.org/licenses/by/4.0",
+    "photographer": "Missvain",
+    "sourceTitle": "File:Guelaguetza Restaurante - February 2024 - Sarah Stierch 05.jpg",
+    "illustrative": true
+  },
+  "espresso-martini": {
+    "image": "/photos/drinks/bar/espresso-martini.jpg",
+    "alt": "Coctel de espresso con espuma y granos de café, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Espresso_Martini.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseURL": "https://creativecommons.org/licenses/by-sa/4.0",
+    "photographer": "Ali Waheed",
+    "sourceTitle": "File:Espresso Martini.jpg",
+    "illustrative": true
+  },
+  "aperol-spritz": {
+    "image": "/photos/drinks/bar/aperol-spritz.jpg",
+    "alt": "Aperol Spritz con hielo y naranja, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:(20240728)_Rotterdam_V11_Aperol_Spritz.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseURL": "https://creativecommons.org/licenses/by-sa/4.0",
+    "photographer": "Roy Zuo",
+    "sourceTitle": "File:(20240728) Rotterdam V11 Aperol Spritz.jpg",
+    "illustrative": true
+  },
+  "bees-knees": {
+    "image": "/photos/drinks/bar/bees-knees.jpg",
+    "alt": "Bee’s Knees de gin, limón y miel en copa, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Bee%27s_Knees_(cocktail).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseURL": "https://creativecommons.org/licenses/by-sa/4.0",
+    "photographer": "Kenneth C. Zirkel",
+    "sourceTitle": "File:Bee's Knees (cocktail).jpg",
+    "illustrative": true
+  },
+  "pina-colada": {
+    "image": "/photos/drinks/bar/pina-colada.jpg",
+    "alt": "Piña colada cremosa con piña, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Pina_Colada_with_key_ingredients.jpg",
+    "license": "CC BY-SA 3.0 de",
+    "licenseURL": "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en",
+    "photographer": "Achim Schleuning (E-Mail: comander02_de@yahoo.de)",
+    "sourceTitle": "File:Pina Colada with key ingredients.jpg",
+    "illustrative": true
+  },
+  "paloma": {
+    "image": "/photos/drinks/bar/paloma.jpg",
+    "alt": "Paloma de tequila y cítricos con hielo, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:C%C3%B3ctel_paloma_y_sangrita,_Mazatl%C3%A1n,_23_de_noviembre_de_2022.jpg",
+    "license": "CC0",
+    "licenseURL": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "photographer": "El Nuevo Doge",
+    "sourceTitle": "File:Cóctel paloma y sangrita, Mazatlán, 23 de noviembre de 2022.jpg",
+    "illustrative": true
+  },
+  "bellini": {
+    "image": "/photos/drinks/bar/bellini.jpg",
+    "alt": "Bellini de durazno en copa de espumoso, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Bellini-Cocktail.jpg",
+    "license": "Public domain",
+    "licenseURL": "",
+    "photographer": "Charles Clavadetscher",
+    "sourceTitle": "File:Bellini-Cocktail.jpg",
+    "illustrative": true
+  },
+  "sangria": {
+    "image": "/photos/drinks/bar/sangria.jpg",
+    "alt": "Sangría tinta con fruta servida en vaso, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:A_glass_of_sangria_and_bread.jpg",
+    "license": "CC BY 3.0",
+    "licenseURL": "https://creativecommons.org/licenses/by/3.0",
+    "photographer": "PierreSelim",
+    "sourceTitle": "File:A glass of sangria and bread.jpg",
+    "illustrative": true
+  },
+  "gin-tonic": {
+    "image": "/photos/drinks/bar/gin-tonic.jpg",
+    "alt": "Gin y tónica transparente con cítricos y hielo, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Gin_and_tonic_cocktail_with_wedge_of_lime.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseURL": "https://creativecommons.org/licenses/by-sa/4.0",
+    "photographer": "Davidnuescheler",
+    "sourceTitle": "File:Gin and tonic cocktail with wedge of lime.jpg",
+    "illustrative": true
+  },
+  "mojito": {
+    "image": "/photos/drinks/bar/mojito.jpg",
+    "alt": "Mojito con menta, lima y hielo, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Cocktail_Mojito.jpg",
+    "license": "CC0",
+    "licenseURL": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "photographer": "https://unsplash.com/@varshesh",
+    "sourceTitle": "File:Cocktail Mojito.jpg",
+    "illustrative": true
+  },
+  "whisky": {
+    "image": "/photos/drinks/bar/whisky.jpg",
+    "alt": "Whisky ámbar servido en vaso sin marca, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Whiskey_in_a_Glencairn.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseURL": "https://creativecommons.org/licenses/by-sa/4.0",
+    "photographer": "BrowneN95",
+    "sourceTitle": "File:Whiskey in a Glencairn.jpg",
+    "illustrative": true
+  },
+  "daiquiri": {
+    "image": "/photos/drinks/bar/daiquiri.jpg",
+    "alt": "Daiquiri clásico de ron y limón en copa, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Basil_Daiquiri.JPG",
+    "license": "CC BY-SA 3.0 de",
+    "licenseURL": "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en",
+    "photographer": "Achim Schleuning",
+    "sourceTitle": "File:Basil Daiquiri.JPG",
+    "illustrative": true
+  },
+  "dark-lager": {
+    "image": "/photos/drinks/bar/dark-lager.jpg",
+    "alt": "Cerveza lager ámbar con espuma en vaso sin marca, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Rock_Paper_Scissors_Brewing_Oktoberfest_Vienna_Lager.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseURL": "https://creativecommons.org/licenses/by-sa/4.0",
+    "photographer": "JIP",
+    "sourceTitle": "File:Rock Paper Scissors Brewing Oktoberfest Vienna Lager.jpg",
+    "illustrative": true,
+    "modifications": "Resized to 720 px and JPEG compressed. Cropped to the actual unbranded Vienna lager glass to exclude the different manufacturer can."
+  },
+  "spirit-rose": {
+    "image": "/photos/drinks/bar/spirit-rose.jpg",
+    "alt": "Tequila rosado en vaso sin marca; referencia generada ilustrativa, no fotografía del producto real.",
+    "sourceURL": "/photos/drinks/bar/spirit-rose.source.json",
+    "sourceTitle": "Tequila rosado — referencia generada con OpenAI image_gen",
+    "license": "Imagen generada con OpenAI image_gen",
+    "licenseURL": "https://openai.com/policies/terms-of-use/",
+    "photographer": "OpenAI image_gen (referencia generada)",
+    "illustrative": true,
+    "generated": true,
+    "modifications": "Referencia generada digitalmente; redimensionada a 720 px y comprimida a JPEG."
+  },
+  "manhattan": {
+    "image": "/photos/drinks/bar/manhattan.jpg",
+    "alt": "Manhattan ámbar servido en copa con cereza, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:2_Manhattan_cocktails,_bird%27s_eye_view.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseURL": "https://creativecommons.org/licenses/by-sa/4.0",
+    "photographer": "Evaengler",
+    "sourceTitle": "File:2 Manhattan cocktails, bird's eye view.jpg",
+    "illustrative": true
+  },
+  "purple-tonic": {
+    "image": "/photos/drinks/bar/purple-tonic.jpg",
+    "alt": "Coctel violeta de gin y tónica con cítricos, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:The_Bar_at_MacArthur_Place_-_Stierch_-_2019_12.jpg",
+    "license": "CC BY 4.0",
+    "licenseURL": "https://creativecommons.org/licenses/by/4.0",
+    "photographer": "Missvain",
+    "sourceTitle": "File:The Bar at MacArthur Place - Stierch - 2019 12.jpg",
+    "illustrative": true
+  },
+  "bloody-mary": {
+    "image": "/photos/drinks/bar/bloody-mary.jpg",
+    "alt": "Bloody Mary rojo de tomate con apio, fotografía de referencia.",
+    "sourceURL": "https://commons.wikimedia.org/wiki/File:Bloody_Mary.jpg",
+    "license": "CC BY 2.0",
+    "licenseURL": "https://creativecommons.org/licenses/by/2.0",
+    "photographer": "William Clifford (williac)",
+    "sourceTitle": "File:Bloody Mary.jpg",
+    "illustrative": true
+  }
+}

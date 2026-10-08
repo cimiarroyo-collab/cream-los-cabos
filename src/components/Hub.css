@@ -158,6 +158,16 @@
 }
 .hub-column-heading p { font-size:9px; color:#657087; margin:8px 0 0 14px; }
 .hub-column-orders { display:grid; gap:10px; }
+@media (min-width:701px) {
+  .hub-board:not(.hub-board-history) .hub-column-orders {
+    max-height:max(320px, calc(100dvh - 395px));
+    overflow-y:auto;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+    align-content:start;
+  }
+}
 .hub-order { background:var(--hub-surface); border:1px solid #ffffff; border-radius:9px; padding:14px 12px 12px; box-shadow:0 2px 8px #29345606; }
 .hub-order-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
 .hub-order-number { font-size:14px; font-weight:600; color:var(--hub-blue); }

@@ -1,4 +1,6 @@
 import { MENU_SOURCE, OFFICIAL_PRODUCTS } from "./menu.js";
+import { FOOD_PHOTOS } from "./foodPhotos.js";
+import { DRINK_PHOTOS } from "./drinkPhotos.js";
 
 export const BRANCHES = ["Palmilla", "Ánima Village"];
 export const STATUSES = [
@@ -143,7 +145,10 @@ export const PRODUCTS = [
   ...OFFICIAL_PRODUCTS.filter((product) => !originalIds.has(product.id)).map(
     (product) => ({ ...product, sourceMetadata: { ...MENU_SOURCE } }),
   ),
-];
+].map(product => {
+  const photo = FOOD_PHOTOS[product.id] || DRINK_PHOTOS[product.id];
+  return photo ? { ...product, image: photo.image, imageAlt: photo.imageAlt } : product;
+});
 export const CATEGORIES = [
   "Todo",
   ...new Set([

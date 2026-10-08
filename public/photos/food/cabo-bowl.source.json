@@ -1,0 +1,14 @@
+{
+  "asset": "/photos/food/cabo-bowl.jpg",
+  "product": "Cabo Bowl",
+  "sourceType": "generated-reference",
+  "generator": "OpenAI image_gen",
+  "createdAt": "2026-10-08",
+  "officialDescription": "Bowl con pollo, arroz, frijoles negros, camote, maíz y aguacate.",
+  "disclosure": "Imagen de referencia generada; no es una fotografía de un platillo real de CREAM Los Cabos.",
+  "mimeType": "image/jpeg",
+  "width": 720,
+  "height": 720,
+  "visualReview": "Seis ingredientes visibles y separados: pollo, arroz, frijoles negros, camote, maíz y aguacate.",
+  "adjustments": "Resized and encoded as JPEG for web delivery."
+}

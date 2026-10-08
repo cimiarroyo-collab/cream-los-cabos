@@ -1,0 +1,18 @@
+{
+  "file": "/photos/drinks/apple-soda.jpg",
+  "type": "generated-reference",
+  "generator": "OpenAI image_gen",
+  "generatedAt": "2026-10-08",
+  "description": "Referencia fotográfica generada de refresco de manzana color dorado, con burbujas y hielo, servido en vaso transparente sin marca.",
+  "menuReference": "Sidral Mundet 355 ml",
+  "disclosure": "Imagen ilustrativa generada. No es una fotografía de CREAM Los Cabos ni una fotografía oficial del producto o envase de Sidral Mundet.",
+  "branding": "Sin logotipos, etiquetas, botellas ni marcas visibles.",
+  "sourceFile": "exec-35831a74-b165-491e-86df-a7b879eca5a7.png",
+  "asset": "/photos/drinks/apple-soda.jpg",
+  "image": "/photos/drinks/apple-soda.jpg",
+  "mimeType": "image/jpeg",
+  "width": 720,
+  "height": 720,
+  "modifications": "Resized to 720 pixels and compressed as JPEG.",
+  "sourceType": "generated-reference"
+}

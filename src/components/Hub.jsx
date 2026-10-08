@@ -926,7 +926,7 @@ export default function Hub() {
                           </div>
                           <p>{statusDescriptions[status]}</p>
                         </header>
-                        <div className="hub-column-orders">
+                        <div className="hub-column-orders" tabIndex={0} aria-label={`Pedidos ${status}`}>
                           {columnOrders.map((order) => (
                             <OrderCard
                               key={order.id}

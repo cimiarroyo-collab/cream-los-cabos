@@ -376,6 +376,12 @@ export default function Club() {
     return saved;
   }
   function navigate(nextView) {
+    if (nextView === "home") {
+      setCategory("Todo");
+      setSection("");
+      setSearch("");
+      setPage(1);
+    }
     setView(nextView);
     setSuccess(false);
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -848,7 +854,7 @@ export default function Club() {
       <footer className="club-footer">
         <Brand />
         <div className="footer-copy"><p>Good food. Brighter days.</p><span>Café, pan artesanal y buenos momentos en Los Cabos.</span></div>
-        <div className="footer-links"><a href={WEBSITE_URL} target="_blank" rel="noopener noreferrer">Web oficial <Icon name="arrow" size={14} /></a><a href="/hub">Acceso al equipo <Icon name="arrow" size={14} /></a></div>
+        <div className="footer-links"><a href={WEBSITE_URL} target="_blank" rel="noopener noreferrer">Web oficial <Icon name="arrow" size={14} /></a><a href="/hub">Acceso al equipo <Icon name="arrow" size={14} /></a><a href="/photos/credits.html">Fotografías y créditos <Icon name="arrow" size={14} /></a></div>
         <div className="footer-contact">{CONTACT_PHONES.map((number) => <a key={number} href={`tel:+52${number.replace(/\D/g, "")}`}>{number}</a>)}</div>
         <span>PALMILLA · ÁNIMA VILLAGE · CREAM LOS CABOS</span>
       </footer>

@@ -1,0 +1,14 @@
+{
+  "asset": "/photos/food/egg-white-omelette.jpg",
+  "product": "Egg-White Omelette",
+  "sourceType": "generated-reference",
+  "generator": "OpenAI image_gen",
+  "createdAt": "2026-10-08",
+  "officialDescription": "Claras con espinaca, queso de cabra y cebolla caramelizada; ensalada y aguacate.",
+  "disclosure": "Imagen de referencia generada; no es una fotografía de un platillo real de CREAM Los Cabos.",
+  "mimeType": "image/jpeg",
+  "width": 720,
+  "height": 720,
+  "visualReview": "Omelette de claras de tono blanco marfil, espinaca, queso de cabra y cebolla caramelizada visibles; ensalada y aguacate a un lado.",
+  "adjustments": "Resized and encoded as JPEG for web delivery."
+}

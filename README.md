@@ -2,8 +2,9 @@
 
 MVP de pedidos con la identidad visual oficial de Cream Café Los Cabos, para las sucursales **Palmilla** y **Ánima Village**. React + Vite, API en Cloudflare Pages Functions y pedidos persistidos en Cloudflare D1. No utiliza Netlify.
 
-- **Cream Club · `/club`**: menú por categoría y búsqueda, opciones y notas por producto, carrito editable, selección de sucursal, datos del cliente, envío y seguimiento privado del pedido.
+- **Cream Club · `/club`**: portada con cuatro favoritos, menú por categorías y secciones de hasta seis productos por página, búsqueda en toda la carta, fotografías por producto, opciones y notas, carrito editable, selección de sucursal, envío y seguimiento privado del pedido.
 - **Cream Hub · `/hub`**: acceso del equipo, pedidos sincronizados, filtros de sucursal y estación (Barra, Cocina, Panadería), búsqueda, indicadores y entregados recientes.
+- **Cream Club**: tarjeta persistida en D1, perfil editable, QR e historial privado. Los beneficios se definirán posteriormente; no se anuncian puntos ni canjes.
 - **Flujo**: Nuevo → Confirmado → En preparación → Listo → Entregado. La separación por estación organiza la preparación; el estado corresponde al pedido completo.
 - Pago al recoger; no se realiza ningún cobro en línea.
 
@@ -25,6 +26,10 @@ Abrir `http://localhost:8788/club` y `/hub`. El código de acceso de Hub es el `
 `npm run dev` sirve sólo el frontend para iterar su diseño. El envío de pedidos requiere Pages Functions; si la API no está disponible, el carrito se conserva y se muestra el error. Los pedidos nunca se simulan como enviados.
 
 ## Cloudflare Pages + D1
+
+La publicación existente utiliza el Worker **cream-los-cabos-preview** y su D1 del mismo nombre. Para actualizarla conservando sus pedidos y protecciones se preparó [worker/README.md](worker/README.md) y `scripts/update-existing-worker.mjs`. Ese actualizador verifica recursos y esquema existentes, conserva secretos y variables, exporta D1 antes de migrar y guarda la versión anterior. Reutiliza las Pages Functions del repositorio; no crea otra cuenta ni otra base.
+
+El siguiente workflow de Pages es una alternativa de infraestructura. No ejecutarlo sobre la publicación existente sin planificar la transferencia de sus datos.
 
 ### Despliegue desde GitHub Actions
 
@@ -49,9 +54,9 @@ Esta configuración prepara el despliegue. La publicación real requiere los tre
 
 ## Datos y contrato
 
-El catálogo común vive en `shared/catalog.js` y `shared/menu.js`: 254 productos únicos de la [carta oficial de Cream](https://www.creamcafeloscabos.com/cream-menu), consultada el 7 de octubre de 2026, más el croissant del prototipo. Incluye Desayunos, Comida, Café, Bebidas, Bar y Vinos; permite filtrar por categoría y sección y buscar sin acentos. Los productos nuevos utilizan ilustraciones locales por categoría.
+El catálogo común vive en `shared/catalog.js` y `shared/menu.js`: 254 productos únicos de la [carta oficial de Cream](https://www.creamcafeloscabos.com/cream-menu), consultada el 7 de octubre de 2026, más el croissant del prototipo. Incluye Desayunos, Comida, Café, Bebidas, Bar y Vinos. La portada presenta cuatro favoritos; elegir una categoría abre sus secciones y muestra hasta seis productos por página. La búsqueda sin acentos abarca la carta completa, independientemente de la sección elegida.
 
-La carta pública no publica precios. Los 251 productos incorporados quedan con precio `null` y pueden pedirse con la advertencia **«Precio por confirmar en sucursal»** en menú, carrito, comprobante y Hub. Los cuatro productos originales conservan los precios y opciones del prototipo; deben validarse con operación antes del lanzamiento comercial. Las fotografías de la aplicación proceden de la web oficial y se utilizan como imágenes de ambiente y de categorías; no representan necesariamente cada producto o personalización exacta.
+La carta pública no publica precios. Los 251 productos incorporados quedan con precio `null` y pueden pedirse con la advertencia **«Precio por confirmar en sucursal»** en menú, carrito, comprobante y Hub. Los cuatro productos originales conservan los precios y opciones del prototipo; deben validarse con operación antes del lanzamiento comercial. Las fotografías de ambiente proceden de la web oficial. Las fotografías del catálogo son referencias del plato o bebida descritos; no representan necesariamente la presentación exacta de Cream ni cada personalización. Se sirven desde archivos locales, con procedencia y créditos en `public/photos/`.
 
 Si hay una línea sin precio, la API devuelve `total: null`, `pricingPending: true` y `knownTotal` con el subtotal de las líneas que sí tienen precio. Este subtotal no representa el total final. D1 conserva ese subtotal en la columna original `total` y los indicadores pendientes en las líneas del pedido; no requiere otra migración. Hub identifica los pedidos pendientes y los excluye de su indicador de total con precio. El equipo confirma el importe en sucursal antes del pago.
 
@@ -64,8 +69,13 @@ El servidor valida productos, opciones, cantidades, cliente y sucursal; calcula 
 | `GET /api/orders?branch=...`       | Sesión Hub             | Pedidos activos y entregados de las últimas 24 horas, hasta 500; sucursal opcional. |
 | `PATCH /api/orders/:id`            | Sesión Hub             | Avanza un paso con `{status, expectedStatus}`.                                      |
 | `GET/POST/DELETE /api/hub/session` | Equipo                 | Consulta, abre con `{token}` o cierra sesión.                                       |
+| `POST /api/members` | Cliente | Crea tarjeta con nombre, teléfono opcional, requestId y accessToken UUID privados. Reintentos idénticos no duplican la tarjeta. |
+| `GET /api/members/:id` | Header `X-Member-Token` o sesión Hub | Perfil e historial de hasta 30 pedidos; contador de todos los entregados. |
+| `PATCH /api/members/:id` | Header `X-Member-Token` | Actualiza nombre y teléfono; la sesión de empleados no puede modificar el perfil. |
 
 Todas las respuestas de API son JSON y `no-store`. La lista del equipo no expone tokens de seguimiento. Club guarda en este navegador el carrito, los datos de recolección y hasta ocho comprobantes con su token privado; D1 es la fuente compartida de pedidos. Ambas interfaces consultan cambios cada cinco segundos mientras están visibles. Los pedidos antiguos se muestran en Hub sin perder sus líneas originales.
+
+La tercera migración añade tarjetas y su asociación a pedidos sin alterar los pedidos existentes. D1 guarda sólo el hash SHA-256 del acceso privado a la tarjeta. Ese acceso se conserva en el navegador del cliente; el QR contiene únicamente un identificador público y abre una consulta que exige sesión Hub. Los pedidos asociados requieren `memberId` y `X-Member-Token`; el historial y el contador derivan de D1.
 
 ## Verificación
 
@@ -91,3 +101,11 @@ Ver [README-CREAM.md](README-CREAM.md) para el registro de alcance y validacione
 El diseño utiliza los colores publicados en la [web oficial](https://www.creamcafeloscabos.com/index), su logo, el ave y fotografías del sitio, alojados en `public/brand/`. La procedencia y uso de cada recurso se detalla en [public/brand/SOURCES.md](public/brand/SOURCES.md). Los datos de sucursales viven en `shared/brand.js`. Se mantienen fuentes del sistema para evitar depender del kit tipográfico externo de la web.
 
 Recursos ilustrativos iniciales conservados en el repositorio, alojados en `public/images/`, obtenidas de Unsplash: [café](https://images.unsplash.com/photo-1511081692775-05d0f180a065), [coffee](https://images.unsplash.com/photo-1509042239860-f550ce710b93), [bebidas](https://images.unsplash.com/photo-1622597467836-f3285f2131b8), [croissant](https://images.unsplash.com/photo-1555507036-ab1f4038808a) y [toast](https://images.unsplash.com/photo-1525351484163-7529414344d8). No dependen de servicios externos durante el uso de la app.
+
+Los créditos del catálogo se publican también en `/photos/credits.html`. Las referencias generadas se identifican expresamente en la procedencia; no se presentan como fotografías reales del restaurante.
+
+## Acceso público observado
+
+El 8 de octubre de 2026, el entorno de trabajo recibió un rechazo **403 de Envoy durante CONNECT**, antes de establecer TLS con el host `workers.dev`. No recibió una respuesta del Worker ni un CF-Ray. Ese resultado no demuestra un bloqueo WAF de Cloudflare. En el repositorio no hay filtros de User-Agent, IP o país para GET `/club`; el guard de origen de las escrituras de API sigue activo.
+
+El acceso local limpio a Club y los permisos privados de Hub se verifican en las pruebas. Para confirmar la publicación vigente y revisar su seguridad remota se necesita conexión autenticada a Cloudflare y un entorno autorizado para acceder al host. No se desactivaron WAF, Access ni protecciones, y no se afirma que el 403 remoto esté solucionado.

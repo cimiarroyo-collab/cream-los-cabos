@@ -2267,4 +2267,7 @@ svg {
   .menu-pickup-bar .text-button { font-size: 10px; }
   .member-view-tabs { gap: 6px; padding-top: 20px; }
   .member-view-tabs button { font-size: 10px; padding: 10px 12px; }
+  .club-promise { display: grid; grid-template-columns: 31px minmax(0, 1fr); align-items: start; }
+  .club-promise > div { min-width: 0; }
+  .club-promise a { grid-column: 2; margin: 0; justify-self: start; }
 }

@@ -1,0 +1,12 @@
+{
+  "image": "/photos/drinks/bar/spirit-rose.jpg",
+  "alt": "Tequila rosado en vaso sin marca; referencia generada ilustrativa, no fotografía del producto real.",
+  "sourceURL": "/photos/drinks/bar/spirit-rose.source.json",
+  "sourceTitle": "Tequila rosado — referencia generada con OpenAI image_gen",
+  "license": "Imagen generada con OpenAI image_gen",
+  "licenseURL": "https://openai.com/policies/terms-of-use/",
+  "photographer": "OpenAI image_gen (referencia generada)",
+  "illustrative": true,
+  "generated": true,
+  "modifications": "Referencia generada digitalmente; redimensionada a 720 px y comprimida a JPEG."
+}

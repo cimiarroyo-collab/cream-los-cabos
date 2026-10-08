@@ -1,0 +1,14 @@
+{
+  "asset": "/photos/food/prosciutto-arugula-pizza.jpg",
+  "product": "Prosciutto & Arugula Pizza",
+  "sourceType": "generated-reference",
+  "generator": "OpenAI image_gen",
+  "createdAt": "2026-10-08",
+  "officialDescription": "Prosciutto y arúgula con mozzarella, queso de cabra y parmesano.",
+  "disclosure": "Imagen de referencia generada; no es una fotografía de un platillo real de CREAM Los Cabos.",
+  "mimeType": "image/jpeg",
+  "width": 720,
+  "height": 720,
+  "visualReview": "Pizza con mozzarella fundida, queso de cabra, prosciutto, arúgula y láminas de parmesano; sin ingredientes ajenos.",
+  "adjustments": "Resized and encoded as JPEG for web delivery."
+}

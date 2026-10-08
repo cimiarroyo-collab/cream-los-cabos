@@ -1,0 +1,14 @@
+{
+  "asset": "/photos/food/prosciutto-parmesan-toast.jpg",
+  "product": "Prosciutto & Parmesan Toast",
+  "sourceType": "generated-reference",
+  "generator": "OpenAI image_gen",
+  "createdAt": "2026-10-08",
+  "officialDescription": "Masa madre con huevo revuelto, aguacate, prosciutto y parmesano; ensalada.",
+  "disclosure": "Imagen de referencia generada; no es una fotografía de un platillo real de CREAM Los Cabos.",
+  "mimeType": "image/jpeg",
+  "width": 720,
+  "height": 720,
+  "visualReview": "Tostada de masa madre con huevo revuelto, aguacate, prosciutto y láminas de parmesano; ensalada a un lado.",
+  "adjustments": "Resized and encoded as JPEG for web delivery."
+}

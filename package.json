@@ -5,22 +5,22 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "vite build",
+    "build": "node scripts/build-photo-credits.mjs && vite build",
     "preview": "vite preview",
     "pages:dev": "wrangler pages dev dist --port 8788",
     "db:migrate": "wrangler d1 migrations apply cream-los-cabos --local",
     "db:migrate:remote": "wrangler d1 migrations apply cream-los-cabos --remote",
     "test": "node --test --test-isolation=none tests/*.test.mjs",
-    "test:e2e": "node tests/e2e.mjs && node tests/recovery.mjs && node tests/menu-e2e.mjs && node tests/member-e2e.mjs && node tests/hub-member-e2e.mjs",
+    "test:e2e": "node tests/e2e.mjs && node tests/recovery.mjs && node tests/menu-e2e.mjs && node tests/member-e2e.mjs && node tests/hub-member-e2e.mjs && node tests/photos-e2e.mjs",
     "check": "npm run test && npm run build"
   },
   "dependencies": {
-    "qrcode": "^1.5.4",
+    "qrcode": "1.5.4",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
   "devDependencies": {
-    "jsqr": "^1.4.0",
+    "jsqr": "1.4.0",
     "playwright": "1.56.0",
     "vite": "7.3.6",
     "wrangler": "4.147.0"

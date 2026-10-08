@@ -1,0 +1,14 @@
+{
+  "asset": "/photos/food/portobello-pesto-fussili.jpg",
+  "product": "Portobello Pesto Fussili",
+  "sourceType": "generated-reference",
+  "generator": "OpenAI image_gen",
+  "createdAt": "2026-10-08",
+  "officialDescription": "Fusilli con pesto, hongos de temporada, tomate cherry y parmesano.",
+  "disclosure": "Imagen de referencia generada; no es una fotografía de un platillo real de CREAM Los Cabos.",
+  "mimeType": "image/jpeg",
+  "width": 720,
+  "height": 720,
+  "visualReview": "Fusilli claramente identificable con pesto verde, hongos, tomate cherry y láminas de parmesano.",
+  "adjustments": "Resized and encoded as JPEG for web delivery."
+}

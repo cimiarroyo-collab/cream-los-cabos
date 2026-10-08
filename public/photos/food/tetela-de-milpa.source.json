@@ -1,0 +1,14 @@
+{
+  "asset": "/photos/food/tetela-de-milpa.jpg",
+  "product": "Tetela de milpa",
+  "sourceType": "generated-reference",
+  "generator": "OpenAI image_gen",
+  "createdAt": "2026-10-08",
+  "description": "Referencia generada de tetelas triangulares de masa nixtamalizada rellenas de mozzarella y chicharrón, con salsa de guajillo y quelites.",
+  "disclosure": "Imagen de referencia generada; no es una fotografía de un platillo real de CREAM Los Cabos.",
+  "mimeType": "image/jpeg",
+  "width": 720,
+  "height": 720,
+  "visualReview": "Triángulos de masa tostada, queso blanco fundido y chicharrón visibles; salsa roja y quelites en plato cerámico crema; sin texto, logos ni elementos ajenos.",
+  "adjustments": "Resized and encoded as JPEG for web delivery."
+}

@@ -1,0 +1,12 @@
+{
+  "image": "/photos/drinks/bar/spirit-gold.jpg",
+  "alt": "Tequila reposado o añejo dorado en vaso sin marca; referencia generada ilustrativa, no fotografía del producto real.",
+  "sourceURL": "/photos/drinks/bar/spirit-gold.source.json",
+  "sourceTitle": "Tequila reposado o añejo dorado — referencia generada con OpenAI image_gen",
+  "license": "Imagen generada con OpenAI image_gen",
+  "licenseURL": "https://openai.com/policies/terms-of-use/",
+  "photographer": "OpenAI image_gen (referencia generada)",
+  "illustrative": true,
+  "generated": true,
+  "modifications": "Referencia generada digitalmente; redimensionada a 720 px y comprimida a JPEG."
+}
