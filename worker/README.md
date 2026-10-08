@@ -14,6 +14,12 @@ No se necesita ni se imprime la clave `HUB_TOKEN`: se verifica que el secreto ya
 
 Cada actualización conserva `previous-deployment.json`, `database-before.sql` y la configuración en su carpeta privada. El export contiene datos de clientes: mantenerlo fuera del repositorio y de enlaces públicos. La publicación no se declara verificada hasta comprobar Club sin sesión y el flujo de pedidos desde un entorno autorizado.
 
+## Publicación desde GitHub
+
+El workflow manual [Update existing CREAM Worker](https://github.com/cimiarroyo-collab/cream-los-cabos/actions/workflows/update-existing-worker.yml) ejecuta este mismo actualizador exclusivamente desde `main`. Solo requiere añadir `CLOUDFLARE_API_TOKEN` en [los secretos de GitHub Actions](https://github.com/cimiarroyo-collab/cream-los-cabos/settings/secrets/actions/new), con Workers Scripts: Edit y D1: Edit para la cuenta vinculada. La cuenta `86d28fca5f32e48946bd3b165d971662` y la D1 existente `07dc1547-ebbd-46ae-966c-9a8a71aa7c68` quedan fijadas en el workflow; no son credenciales. Si falta el token, la ejecución termina antes de modificar Cloudflare. No utilizar el workflow de Pages para este Worker.
+
+La ejecución serializa las actualizaciones de este Worker, verifica el destino remoto y conserva `HUB_TOKEN`, variables, rutas y protecciones mediante el actualizador. El export de D1 se guarda únicamente en la carpeta privada del runner durante esa ejecución: no se publica como artifact ni se imprime su contenido, y se elimina al destruir el runner. Esta copia no sustituye un respaldo privado duradero. El workflow no prueba el dominio `workers.dev` ni declara que el acceso público o el 403 estén resueltos; esa verificación debe realizarse después desde un entorno autorizado.
+
 ## Recuperación
 
 La versión anterior al 100% queda registrada en `previous-deployment.json`. Ante un problema de código, desde la carpeta de preparación se puede volver a esa versión con `wrangler versions deploy <version_id>@100% --config wrangler.json --yes`; conservar la misma cuenta y autorización. La versión anterior incluye sus assets, y este comando conserva la configuración de rutas. No restaurar automáticamente el export D1: borraría pedidos recibidos después de la copia. Las tres migraciones son aditivas, y el código anterior tolera la nueva tabla `club_members` y la columna nullable `orders.member_id`, por lo que una recuperación de código puede conservar la base actual.

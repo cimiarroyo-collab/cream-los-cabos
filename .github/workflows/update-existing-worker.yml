@@ -1,0 +1,43 @@
+name: Update existing CREAM Worker
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-worker-cream-los-cabos-preview
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check Cloudflare authorization
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo '::error::Falta el secreto CLOUDFLARE_API_TOKEN en GitHub Actions. Añádelo en Settings → Secrets and variables → Actions. No se modificó Cloudflare.'
+            exit 1
+          fi
+      - name: Checkout main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Verify, back up and update the existing Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 86d28fca5f32e48946bd3b165d971662
+          CREAM_D1_DATABASE_ID: 07dc1547-ebbd-46ae-966c-9a8a71aa7c68
+        run: node --use-env-proxy scripts/update-existing-worker.mjs --deploy
