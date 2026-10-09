@@ -301,12 +301,16 @@ export async function main() {
     throw new Error("Cloudflare no confirmó la identidad del proyecto Pages recién creado. Se detiene la publicación nueva.");
   }
   let staging;
+  let deploymentError;
   try {
     const stagingRoot = join(ROOT, ".cream-deploy");
     await mkdir(stagingRoot, { recursive: true, mode: 0o700 });
     staging = await mkdtemp(join(stagingRoot, "run-"));
     await writeFile(join(staging, "wrangler.toml"), config, { mode: 0o600 });
-    await Promise.all(["functions", "shared", "dist"].map((directory) => cp(join(ROOT, directory), join(staging, directory), { recursive: true })));
+    // A failed copy must not start cleanup while another copy is still writing.
+    const copies = await Promise.allSettled(["functions", "shared", "dist"].map((directory) => cp(join(ROOT, directory), join(staging, directory), { recursive: true })));
+    const failedCopy = copies.find((copy) => copy.status === "rejected");
+    if (failedCopy) throw failedCopy.reason;
     const env = { ...process.env, WRANGLER_LOG_PATH: join(staging, "wrangler.log"), WRANGLER_LOG_SANITIZE: "true", WRANGLER_SEND_METRICS: "false", CI: "true" };
     const cli = (args, options = {}) => run(process.execPath, [wrangler, ...args], { cwd: staging, env, redact, ...options });
     log("Aplicando únicamente las migraciones pendientes de D1…");
@@ -342,8 +346,18 @@ export async function main() {
     log(`Publicado y verificado: ${baseURL}/club y ${baseURL}/hub`);
     log("Verificación: rutas públicas, acceso protegido, sesión segura, lectura de pedidos en D1 y cierre de sesión. No se crearon pedidos de prueba.");
     return { baseURL, projectName: PROJECT, databaseId: database.uuid, commit };
+  } catch (error) {
+    deploymentError = error;
+    throw error;
   } finally {
-    if (staging) await rm(staging, { recursive: true, force: true });
+    if (staging) {
+      try {
+        await rm(staging, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+      } catch (error) {
+        if (!deploymentError) throw error;
+        log("No se pudo limpiar el directorio temporal de despliegue. Se conserva el error original para diagnóstico.");
+      }
+    }
   }
 }
 

@@ -1,9 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import childProcess from "node:child_process";
+import fsPromises from "node:fs/promises";
 import { syncBuiltinESMExports } from "node:module";
-import { EventEmitter } from "node:events";
+import { EventEmitter, once } from "node:events";
 import { PassThrough } from "node:stream";
+import { basename, dirname, join } from "node:path";
 import { assertFreshAccountId, assertFreshCloudflareTarget } from "../scripts/fresh-cloudflare-target.mjs";
 import { main } from "../scripts/deploy-cloudflare.mjs";
 
@@ -26,7 +28,12 @@ const queued = (responses) => {
   };
 };
 
-function mockDeployment(context, fetchImpl) {
+const copyFixture = async (_source, target) => {
+  await fsPromises.mkdir(target, { recursive: true });
+  await fsPromises.writeFile(join(target, "fixture.txt"), "deployment artifact fixture\n");
+};
+
+function mockDeployment(context, fetchImpl, { copyImpl = copyFixture } = {}) {
   const keys = ["CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID", "HUB_TOKEN", "CREAM_FRESH_ACCOUNT_ID"];
   const previous = new Map(keys.map((key) => [key, process.env[key]]));
   const previousFetch = globalThis.fetch;
@@ -42,17 +49,21 @@ function mockDeployment(context, fetchImpl) {
   });
   Object.assign(process.env, { CLOUDFLARE_API_TOKEN: apiToken, CLOUDFLARE_ACCOUNT_ID: accountId, HUB_TOKEN: "private-hub-token-fixture", CREAM_FRESH_ACCOUNT_ID: accountId });
   globalThis.fetch = fetchImpl;
+  // npm check is mocked, so its build artifacts must be fixtures as well.
+  // The tests must run in a clean checkout where dist does not exist yet.
+  context.mock.method(fsPromises, "cp", copyImpl);
   context.mock.method(childProcess, "spawn", (command, args) => {
     commands.push({ command, args });
     const child = new EventEmitter();
     child.stdin = new PassThrough();
     child.stdout = new PassThrough();
     child.stderr = new PassThrough();
+    const closedStreams = Promise.all([once(child.stdin, "finish"), once(child.stdout, "end"), once(child.stderr, "end")]);
     queueMicrotask(() => {
       child.stdout.end();
       child.stderr.end();
-      child.emit("close", 0);
     });
+    closedStreams.then(() => child.emit("close", 0));
     return child;
   });
   syncBuiltinESMExports();
@@ -309,4 +320,51 @@ test("fresh deployment returns only verified public deployment metadata", async 
   assert.match(result.commit, /^[a-f\d]{40}$/);
   assert.ok(!JSON.stringify(result).includes(apiToken));
   assert.ok(!JSON.stringify(result).includes(process.env.HUB_TOKEN));
+});
+
+const createFreshFixture = async (url, init) => {
+  if (url.includes("/pages/projects/")) return absentPages();
+  if (url.includes("/d1/database?")) return d1();
+  if (url.endsWith("/d1/database") && init.method === "POST") return response(200, { success: true, result: database() });
+  if (url.endsWith("/pages/projects") && init.method === "POST") return response(200, { success: true, result: { id: "created-project", name: "cream-los-cabos", production_branch: "main" } });
+  throw new Error("unexpected request");
+};
+
+test("deployment waits for all artifact copies before cleaning a failed staging directory", async (context) => {
+  const originalRm = fsPromises.rm;
+  const copyError = Object.assign(new Error("Missing build artifact fixture"), { code: "ENOENT" });
+  let staging;
+  let completedCopies = 0;
+  const commands = mockDeployment(context, createFreshFixture, { copyImpl: async (source, target) => {
+    staging = dirname(target);
+    if (basename(source) === "dist") throw copyError;
+    await new Promise((resolve) => setImmediate(resolve));
+    await copyFixture(source, target);
+    completedCopies += 1;
+  } });
+  context.mock.method(fsPromises, "rm", async (target, options) => {
+    assert.equal(completedCopies, 2, "cleanup must wait for copies that outlive the first failure");
+    assert.equal(options.maxRetries, 3);
+    return originalRm(target, options);
+  });
+  syncBuiltinESMExports();
+  await assert.rejects(main(), (error) => error === copyError);
+  assert.deepEqual(commands, [{ command: "npm", args: ["run", "check"] }]);
+  await assert.rejects(fsPromises.access(staging), { code: "ENOENT" });
+});
+
+test("deployment preserves the substantive failure when staging cleanup also fails", async (context) => {
+  const originalRm = fsPromises.rm;
+  const copyError = Object.assign(new Error("Missing build artifact fixture"), { code: "ENOENT" });
+  const cleanupError = Object.assign(new Error("Cleanup fixture is busy"), { code: "ENOTEMPTY" });
+  let staging;
+  mockDeployment(context, createFreshFixture, { copyImpl: async (source, target) => {
+    staging = dirname(target);
+    if (basename(source) === "dist") throw copyError;
+    await copyFixture(source, target);
+  } });
+  context.after(async () => { if (staging) await originalRm(staging, { recursive: true, force: true }); });
+  context.mock.method(fsPromises, "rm", async () => { throw cleanupError; });
+  syncBuiltinESMExports();
+  await assert.rejects(main(), (error) => error === copyError);
 });
