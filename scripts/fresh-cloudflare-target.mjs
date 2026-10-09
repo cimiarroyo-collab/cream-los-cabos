@@ -4,6 +4,13 @@ const PAGE_SIZE = 100;
 const UUID = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i;
 const ACCOUNT_ID = /^[a-f\d]{32}$/i;
 
+function responseError(message, { response, data } = {}) {
+  const status = Number.isInteger(response?.status) && response.status >= 100 && response.status <= 599 ? response.status : "desconocido";
+  const codes = Array.isArray(data?.errors) ? data.errors.map((error) => error?.code).filter(Number.isSafeInteger).slice(0, 5) : [];
+  // Never include Cloudflare messages, bodies, headers, or nonnumeric codes.
+  return new Error(`${message} (HTTP ${status}; códigos Cloudflare: ${codes.length ? codes.join(", ") : "sin códigos numéricos"}).`);
+}
+
 export function assertFreshAccountId(accountId, expectedAccountId) {
   if (typeof accountId !== "string" || typeof expectedAccountId !== "string" || !ACCOUNT_ID.test(accountId) || !ACCOUNT_ID.test(expectedAccountId)) {
     throw new Error("La publicación nueva requiere identificadores de cuenta de 32 caracteres válidos.");
@@ -32,10 +39,10 @@ export async function assertFreshCloudflareTarget({ apiToken, accountId, expecte
       });
       data = await response.json();
     } catch {
-      throw new Error("No se pudo comprobar el destino nuevo de Cloudflare. No se autoriza modificar recursos.");
+      throw responseError("No se pudo comprobar el destino nuevo de Cloudflare. No se autoriza modificar recursos.", { response });
     }
     if (!data || typeof data !== "object" || Array.isArray(data) || !Number.isInteger(response.status) || typeof response.ok !== "boolean") {
-      throw new Error("Cloudflare devolvió una respuesta inválida al comprobar el destino nuevo.");
+      throw responseError("Cloudflare devolvió una respuesta inválida al comprobar el destino nuevo.", { response, data });
     }
     return { response, data };
   };
@@ -49,7 +56,7 @@ export async function assertFreshCloudflareTarget({ apiToken, accountId, expecte
     if (successful(pages) && pages.data.result && typeof pages.data.result === "object" && !Array.isArray(pages.data.result) && pages.data.result.name === PROJECT) {
       throw new Error("El proyecto Pages cream-los-cabos ya existe. La publicación nueva se detiene y conserva su configuración y secretos.");
     }
-    throw new Error("No se pudo confirmar la ausencia del proyecto Pages cream-los-cabos. Revisar permisos y respuesta de Cloudflare.");
+    throw responseError("No se pudo confirmar la ausencia del proyecto Pages cream-los-cabos. Revisar permisos y respuesta de Cloudflare.", pages);
   }
   const matches = [];
   let expectedTotal;
@@ -57,11 +64,11 @@ export async function assertFreshCloudflareTarget({ apiToken, accountId, expecte
   for (let page = 1; page <= 10000; page += 1) {
     const result = await request(`/d1/database?name=${PROJECT}&per_page=${PAGE_SIZE}&page=${page}`);
     if (!successful(result) || !Array.isArray(result.data.result)) {
-      throw new Error("Cloudflare no devolvió una lista válida y autorizada de D1 para la publicación nueva.");
+      throw responseError("Cloudflare no devolvió una lista válida y autorizada de D1 para la publicación nueva.", result);
     }
     const batch = result.data.result;
     if (batch.length > PAGE_SIZE || batch.some((database) => !database || typeof database !== "object" || Array.isArray(database) || typeof database.name !== "string" || !database.name || !UUID.test(database.uuid || ""))) {
-      throw new Error("La lista de D1 contiene recursos inválidos. No se autoriza la publicación nueva.");
+      throw responseError("La lista de D1 contiene recursos inválidos. No se autoriza la publicación nueva.", result);
     }
     matches.push(...batch.filter((database) => database.name === PROJECT));
     seen += batch.length;
@@ -72,11 +79,11 @@ export async function assertFreshCloudflareTarget({ apiToken, accountId, expecte
         (info.count !== undefined && info.count !== batch.length) ||
         (info.total_count !== undefined && (!Number.isInteger(info.total_count) || info.total_count < seen)) ||
         (info.total_pages !== undefined && (!Number.isInteger(info.total_pages) || info.total_pages < (batch.length ? page : 0)))) {
-        throw new Error("Cloudflare devolvió paginación inválida de D1. No se autoriza la publicación nueva.");
+        throw responseError("Cloudflare devolvió paginación inválida de D1. No se autoriza la publicación nueva.", result);
       }
       if (info.total_count !== undefined) {
         if (expectedTotal !== undefined && expectedTotal !== info.total_count) {
-          throw new Error("La lista D1 cambió durante su comprobación. Volver a comprobar el destino antes de publicar.");
+          throw responseError("La lista D1 cambió durante su comprobación. Volver a comprobar el destino antes de publicar.", result);
         }
         expectedTotal = info.total_count;
         more = seen < expectedTotal;
@@ -86,12 +93,12 @@ export async function assertFreshCloudflareTarget({ apiToken, accountId, expecte
       if (info.total_pages !== undefined) {
         const morePages = page < info.total_pages;
         if (info.total_count !== undefined && more !== morePages) {
-          throw new Error("Cloudflare devolvió totales incompatibles en la paginación D1.");
+          throw responseError("Cloudflare devolvió totales incompatibles en la paginación D1.", result);
         }
         more = morePages;
       }
     }
-    if (more && !batch.length) throw new Error("Cloudflare devolvió una página D1 vacía antes de completar la lista.");
+    if (more && !batch.length) throw responseError("Cloudflare devolvió una página D1 vacía antes de completar la lista.", result);
     if (!more) {
       if (matches.length > 1) throw new Error("Hay varias D1 cream-los-cabos. La publicación nueva se detiene por ambigüedad.");
       if (matches.length) throw new Error("La D1 cream-los-cabos ya existe. La publicación nueva conserva sus datos y se detiene.");

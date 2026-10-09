@@ -117,6 +117,46 @@ test("fresh guard requires the recognized Pages missing code and rejects uncerta
   }
 });
 
+for (const target of ["Pages", "D1"]) {
+  test(`fresh guard reports safe status and bounded numeric codes for a secret-bearing ${target} error response`, async () => {
+    const privateText = "private-response-and-header-fixture";
+    const failure = response(403, {
+      success: false,
+      result: { token: apiToken, privateText },
+      errors: [
+        { code: 10000, message: `${apiToken} ${privateText}` },
+        { code: apiToken, message: privateText },
+        null,
+        { code: "8000001", message: privateText },
+        ...[8000001, 10001, 10002, 10003, 10004].map((code) => ({ code, message: privateText })),
+      ],
+    });
+    failure.headers = new Headers({ "X-Private-Fixture": privateText });
+    const fixture = queued(target === "Pages" ? [failure] : [absentPages(), failure]);
+    await assert.rejects(assertFreshCloudflareTarget(options(fixture.fetchImpl)), (error) => {
+      assert.match(error.message, /HTTP 403; códigos Cloudflare: 10000, 8000001, 10001, 10002, 10003/);
+      assert.ok(!error.message.includes("10004"), "at most five numeric codes may be emitted");
+      assert.ok(!error.message.includes(apiToken));
+      assert.ok(!error.message.includes(privateText));
+      assert.ok(!error.message.includes("X-Private-Fixture"));
+      return true;
+    });
+    assert.equal(fixture.calls.length, target === "Pages" ? 1 : 2);
+  });
+}
+
+test("fresh guard reports HTTP status without raw JSON parser errors or untrusted status text", async () => {
+  for (const [status, expected] of [[502, "HTTP 502"], [apiToken, "HTTP desconocido"]]) {
+    const fixture = queued([{ status, ok: false, json: async () => { throw new Error(apiToken); } }]);
+    await assert.rejects(assertFreshCloudflareTarget(options(fixture.fetchImpl)), (error) => {
+      assert.ok(error.message.includes(expected));
+      assert.match(error.message, /sin códigos numéricos/);
+      assert.ok(!error.message.includes(apiToken));
+      return true;
+    });
+  }
+});
+
 test("fresh guard never accepts an existing Pages project", async () => {
   const fixture = queued([response(200, { success: true, errors: [], result: { name: "cream-los-cabos" } })]);
   await assert.rejects(assertFreshCloudflareTarget(options(fixture.fetchImpl)), /Pages.*ya existe/);
