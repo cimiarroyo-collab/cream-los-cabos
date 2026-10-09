@@ -51,13 +51,14 @@ Se amplió el prototipo existente conservando React/Vite, las rutas `/club` y `/
 - `tests/`: validación de catálogo, SQLite/API y recorrido de navegador con D1 real local.
 - `.github/workflows/ci.yml`: build, pruebas y recorrido completo en cada push/PR.
 - `.github/workflows/deploy-cloudflare.yml` y `scripts/deploy-cloudflare.mjs`: despliegue manual de producción en Pages y D1, con migraciones y verificación del acceso a Hub.
+- `.github/workflows/bootstrap-cloudflare.yml`, `scripts/bootstrap-hub.mjs` y `scripts/unseal-hub-access.mjs`: primera publicación exclusivamente sobre recursos nuevos en la cuenta actual; código del equipo cifrado para una clave pública RSA y recuperación local privada.
 - `worker/` y `scripts/update-existing-worker.mjs`: actualizador del Worker publicado que reutiliza las Functions y conserva su D1, secretos, rutas y protecciones. Guarda export D1 y versión anterior antes de migrar.
 
 ## Configuración pendiente de producción
 
-La publicación actual utiliza `cream-los-cabos-preview` en Workers con su D1 existente. El nuevo actualizador conserva ese destino; requiere conexión autenticada a la cuenta y no debe sustituirse por una cuenta temporal nueva. El repositorio no incluye secretos. La configuración de Pages permanece preparada como alternativa futura, con transferencia de datos planificada antes de cambiar de infraestructura.
+La publicación anterior utiliza `cream-los-cabos-preview` en Workers con su D1 existente. El bootstrap de Pages crea una publicación y una D1 nuevas en la cuenta actual, conservando esos recursos anteriores. Rechaza recursos de destino existentes y no transfiere pedidos. El repositorio no incluye secretos.
 
-El workflow de despliegue prepara el identificador de D1 automáticamente en una configuración temporal. Para publicarlo desde GitHub, configurar los secretos indicados en README y ejecutar **Deploy Cream to Cloudflare** en `main`. La presencia del workflow no implica que exista un despliegue público.
+Para la primera publicación, seguir la entrega cifrada descrita en README y ejecutar **Bootstrap fresh Cream Pages and private Hub access** en `main`. La subida obligatoria del artifact cifrado sucede antes de cualquier modificación de Cloudflare; conservarlo y descifrarlo localmente antes de su caducidad de siete días. Los despliegues posteriores con **Deploy Cream to Cloudflare** requieren añadir el código recuperado como secreto `HUB_TOKEN` de GitHub. La presencia del workflow no implica que exista un despliegue público.
 
 El alcance es pedidos para recoger y pago en sucursal. Validar con el negocio los precios y opciones originales y cargar la lista vigente de precios antes del lanzamiento comercial. La carta oficial publicada no indica diferencias de disponibilidad entre Palmilla y Ánima Village; ambos locales utilizan el catálogo común y confirman disponibilidad e importe en sucursal. Las tarjetas se conservan mediante acceso privado en el navegador; no incluyen recuperación de cuenta en otros dispositivos. No incluye pagos en línea, inventario, delivery ni notificaciones externas.
 

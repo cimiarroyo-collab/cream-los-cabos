@@ -29,7 +29,27 @@ Abrir `http://localhost:8788/club` y `/hub`. El código de acceso de Hub es el `
 
 La publicación existente utiliza el Worker **cream-los-cabos-preview** y su D1 del mismo nombre. Para actualizarla conservando sus pedidos y protecciones se preparó [worker/README.md](worker/README.md) y `scripts/update-existing-worker.mjs`. Ese actualizador verifica recursos y esquema existentes, conserva secretos y variables, exporta D1 antes de migrar y guarda la versión anterior. Reutiliza las Pages Functions del repositorio; no crea otra cuenta ni otra base.
 
-El siguiente workflow de Pages es una alternativa de infraestructura. No ejecutarlo sobre la publicación existente sin planificar la transferencia de sus datos.
+La publicación inicial nueva en Pages utiliza una D1 nueva en la cuenta actual. El bootstrap conserva el Worker y su D1 existentes y rechaza un proyecto Pages o una D1 llamados `cream-los-cabos` que ya existan; no importa ni transfiere sus datos.
+
+### Primera publicación con entrega privada del código
+
+Configurar únicamente `CLOUDFLARE_API_TOKEN` (Pages Edit + D1 Edit, limitado a la cuenta de destino) y `CLOUDFLARE_ACCOUNT_ID` como secretos de GitHub. Ejecutar **Bootstrap fresh Cream Pages and private Hub access** en `main`, con el identificador de cuenta esperado, una clave pública RSA de al menos 3072 bits en PEM codificado en base64 y, opcionalmente, el SHA completo esperado. Generar y conservar la clave privada fuera del repositorio y de GitHub Actions.
+
+Antes de modificar Cloudflare, el workflow verifica que el destino sea nuevo, genera un código de 256 bits, lo cifra mediante RSA-OAEP/SHA-256 y sube exclusivamente `initial-hub-access.sealed.json` al artifact `cream-initial-hub-access-<run>-<attempt>` (caduca a los siete días). El ciphertext vincula cuenta, proyecto, repositorio, commit, ejecución, intento y huella de la clave. El código se enmascara y pasa entre pasos sólo mediante `GITHUB_ENV`; no se publica en logs, outputs ni artifacts. Si falla la subida del archivo cifrado, el despliegue no comienza. Después publica Pages/D1 y verifica el recorrido público; el segundo artifact contiene sólo el resultado no secreto.
+
+Descargar el artifact cifrado y descifrarlo localmente, contrastando los valores con la cuenta, el commit, la ejecución de Actions y la huella SHA-256 SPKI de la clave pública original. No tomar esos valores del archivo descargado como única fuente de confianza:
+
+```bash
+node scripts/unseal-hub-access.mjs \
+  --sealed /ruta/initial-hub-access.sealed.json \
+  --private-key /ruta/clave-privada.pem \
+  --out /ruta/directorio-privado/hub-code.txt \
+  --account CUENTA_ESPERADA --repository OWNER/REPO \
+  --commit SHA_COMPLETO --run RUN_ID --attempt INTENTO \
+  --fingerprint HUELLA_SHA256_SPKI
+```
+
+El descifrador no imprime el código: lo escribe en un archivo nuevo de permisos `0600`, dentro de un directorio `0700`, y rechaza sobrescrituras. Conservar la clave privada y el código en almacenamiento privado. El bootstrap no añade `HUB_TOKEN` a los secretos del repositorio: los despliegues posteriores mediante el workflow siguiente requieren configurar ese secreto con el mismo código recuperado; el bootstrap no sirve para rotarlo ni para repetir una publicación existente.
 
 ### Despliegue desde GitHub Actions
 

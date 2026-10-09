@@ -3,6 +3,7 @@ import { access, cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/pro
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { StringDecoder } from "node:string_decoder";
+import { assertFreshAccountId, assertFreshCloudflareTarget } from "./fresh-cloudflare-target.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PROJECT = "cream-los-cabos";
@@ -213,6 +214,14 @@ async function verifyLive(baseURL, hubToken) {
 export async function main() {
   // Missing credentials must fail before API calls, subprocesses, or filesystem writes.
   const credentials = requireCredentials(process.env);
+  const freshAccountId = process.env.CREAM_FRESH_ACCOUNT_ID;
+  const freshOnly = freshAccountId !== undefined;
+  if (freshOnly) assertFreshAccountId(credentials.accountId, freshAccountId);
+  const assertFresh = () => assertFreshCloudflareTarget({
+    apiToken: credentials.apiToken,
+    accountId: credentials.accountId,
+    expectedAccountId: freshAccountId,
+  });
   const redact = redactor([credentials.apiToken, credentials.hubToken]);
   const log = (message) => console.log(redact(message));
   const wrangler = join(ROOT, "node_modules", "wrangler", "bin", "wrangler.js");
@@ -238,6 +247,7 @@ export async function main() {
     }
     return data.result;
   };
+  if (freshOnly) await assertFresh();
   log("Verificando recursos existentes de Cloudflare Pages y D1…");
   let [project, databases] = await Promise.all([
     api(`/pages/projects/${PROJECT}`, { allowMissing: true }),
@@ -252,6 +262,9 @@ export async function main() {
     })(),
   ]);
   const matching = databases.filter((database) => database.name === PROJECT);
+  if (freshOnly && (project || matching.length)) {
+    throw new Error("Aparecieron recursos Pages o D1 existentes durante la comprobación. La publicación nueva no adoptará ni modificará esos recursos.");
+  }
   if (matching.length > 1) throw new Error("Hay más de una D1 con el nombre Cream. Resolver esa ambigüedad antes de desplegar.");
   let database = matching[0];
   assertPagesCompatible(project, database?.uuid);
@@ -259,9 +272,11 @@ export async function main() {
   if (project?.source) log("Se conserva el vínculo existente con cimiarroyo-collab/cream-los-cabos y su configuración de build.");
   log("Ejecutando pruebas y build antes de modificar recursos…");
   await run("npm", ["run", "check"], { redact });
+  if (freshOnly) await assertFresh();
   if (!database) {
     log("Creando la base D1 de Cream…");
     database = await api("/d1/database", { method: "POST", body: { name: PROJECT } });
+    if (freshOnly && database?.name !== PROJECT) throw new Error("Cloudflare no confirmó la identidad de la D1 recién creada. Se detiene la publicación nueva.");
   }
   // Validate the response before creating another resource or running migrations.
   const config = makeDeploymentConfig(template, database.uuid, ROOT);
@@ -273,6 +288,17 @@ export async function main() {
       build_config: { build_command: "npm run build", destination_dir: "dist" },
       deployment_configs: { production: { compatibility_date: compatibilityDate }, preview: { compatibility_date: compatibilityDate } },
     } });
+  }
+  const createdProjectId = freshOnly ? project?.id : null;
+  const assertCreatedProject = async () => {
+    const current = await api(`/pages/projects/${PROJECT}`);
+    if (typeof createdProjectId !== "string" || !createdProjectId || current?.id !== createdProjectId || current.name !== PROJECT || current.source) {
+      throw new Error("La identidad del proyecto Pages recién creado cambió o no pudo verificarse. No se sobrescribirá su clave de Hub ni se desplegará.");
+    }
+    assertPagesCompatible(current, database.uuid);
+  };
+  if (freshOnly && (typeof createdProjectId !== "string" || !createdProjectId || project.name !== PROJECT || project.source)) {
+    throw new Error("Cloudflare no confirmó la identidad del proyecto Pages recién creado. Se detiene la publicación nueva.");
   }
   let staging;
   try {
@@ -286,12 +312,15 @@ export async function main() {
     log("Aplicando únicamente las migraciones pendientes de D1…");
     await cli(["d1", "migrations", "apply", PROJECT, "--remote"]);
     await inspectDatabase(api, database.uuid);
+    if (freshOnly) await assertCreatedProject();
     log("Configurando la clave privada de Cream Hub en producción…");
     // Pages secrets target production by default; do not rely on its hidden --env flag.
     await cli(["pages", "secret", "put", "HUB_TOKEN", "--project-name", PROJECT], { input: `${credentials.hubToken}\n` });
+    if (freshOnly) await assertCreatedProject();
     log("Desplegando frontend y Pages Functions en la rama main…");
     await cli(["pages", "deploy", "dist", "--project-name", PROJECT, "--branch", "main", "--commit-hash", commit, `--commit-dirty=${dirty}`, "--commit-message", "Cream Los Cabos: producción verificada"]);
     const deployed = await api(`/pages/projects/${PROJECT}`);
+    if (freshOnly && (deployed?.id !== createdProjectId || deployed.name !== PROJECT)) throw new Error("La identidad del proyecto Pages publicado no coincide con el proyecto recién creado.");
     if (!/^[a-z\d.-]+\.pages\.dev$/i.test(deployed.subdomain || "")) throw new Error("Cloudflare no devolvió un dominio público válido de Pages.");
     const baseURL = `https://${deployed.subdomain}`;
     let verified = false;
@@ -312,6 +341,7 @@ export async function main() {
     if (!verified) throw new Error(`Se publicó ${baseURL}, pero la verificación pública falló: ${lastError?.message}. El despliegue se conserva para diagnóstico.`);
     log(`Publicado y verificado: ${baseURL}/club y ${baseURL}/hub`);
     log("Verificación: rutas públicas, acceso protegido, sesión segura, lectura de pedidos en D1 y cierre de sesión. No se crearon pedidos de prueba.");
+    return { baseURL, projectName: PROJECT, databaseId: database.uuid, commit };
   } finally {
     if (staging) await rm(staging, { recursive: true, force: true });
   }

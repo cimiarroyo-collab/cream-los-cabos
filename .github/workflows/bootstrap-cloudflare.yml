@@ -1,0 +1,73 @@
+name: Bootstrap fresh Cream Pages and private Hub access
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_account_id:
+        description: Trusted current Cloudflare account ID (must match secret)
+        required: true
+        type: string
+      recipient_public_key_b64:
+        description: Base64 PEM public RSA key (3072 bits minimum); keep private key local
+        required: true
+        type: string
+      expected_commit:
+        description: Optional trusted full main commit SHA
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-production
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Verify fresh target and seal initial Hub access
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CREAM_FRESH_ACCOUNT_ID: ${{ inputs.expected_account_id }}
+          CREAM_RECIPIENT_PUBLIC_KEY_B64: ${{ inputs.recipient_public_key_b64 }}
+          CREAM_EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+        run: node --use-env-proxy scripts/bootstrap-hub.mjs
+      - name: Preserve encrypted access before any deployment mutation
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: cream-initial-hub-access-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .cream-deploy/initial-hub-access.sealed.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: false
+      - name: Publish new Pages and D1 and verify the public flow
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CREAM_FRESH_ACCOUNT_ID: ${{ inputs.expected_account_id }}
+        run: node --use-env-proxy scripts/verify-live-flow.mjs --deploy-fresh
+      - name: Preserve public verification result
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: cream-public-verification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .cream-deploy/public-e2e.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
